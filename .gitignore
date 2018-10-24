@@ -1,0 +1,15 @@
+
+*.pdf
+
+*.SUNet
+*.pyc
+.env/*
+src/data/**
+! **/.gitkeep
+src/checkpoints/**
+src/processed
+
+examples/data
+examples/graphs/*
+examples/checkpoints/*
+examples/visualization/*
