@@ -16,3 +16,6 @@ def chat():
         return 'empty request body', 400
 
     return bot.response(body['input'])
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0')
