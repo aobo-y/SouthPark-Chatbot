@@ -15,4 +15,4 @@ COPY src/processed ./processed
 COPY src/checkpoints ./checkpoints
 
 EXPOSE 5000
-CMD [ "python", "webhook_server.py" ]
+CMD [ "python", "telegram_bot.py" ]
