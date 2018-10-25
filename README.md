@@ -1,5 +1,13 @@
 # SouthPark Chatbot
 
+## Setup
+
+The code requires `python3`. Install dependencies by
+
+```
+pip install -r requirements.txt
+```
+
 ## Usage
 
 ### Chat CLI
