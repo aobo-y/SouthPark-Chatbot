@@ -13,7 +13,7 @@ pip install -r requirements.txt
 *If you want to run it on the school server, run the following command to load the some modules first*
 
 ```bash
-source load_modules.sh
+source server_env
 ```
 
 ### Chat CLI
