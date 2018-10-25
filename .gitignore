@@ -1,3 +1,5 @@
+# ignore the log file
+nohup.out
 
 *.pdf
 

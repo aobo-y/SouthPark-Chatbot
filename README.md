@@ -10,6 +10,15 @@ pip install -r requirements.txt
 
 ## Usage
 
+*If you want to run it on the school server, load the following modules first*
+
+```bash
+module load python3
+module load anaconda3
+module load cuda-toolkit
+module load cudnn
+```
+
 ### Chat CLI
 
 Start the command line interaction with the chat bot.
