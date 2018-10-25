@@ -28,6 +28,12 @@ from model import ChatBotModel
 import config
 import data
 
+import os
+
+abspath = os.path.abspath(__file__)
+dname = os.path.dirname(abspath)
+os.chdir(dname)
+
 def _get_random_bucket(train_buckets_scale):
     """ Get a random bucket from which to choose a training sample """
     rand = random.random()
