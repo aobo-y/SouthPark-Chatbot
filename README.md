@@ -1,8 +1,8 @@
 # SouthPark Chatbot
 
-## Usgae
+## Usage
 
-### Chat Cli
+### Chat CLI
 
 Start the command line interaction with the chat bot.
 ```
