@@ -10,13 +10,10 @@ pip install -r requirements.txt
 
 ## Usage
 
-*If you want to run it on the school server, load the following modules first*
+*If you want to run it on the school server, run the following command to load the some modules first*
 
 ```bash
-module load python3
-module load anaconda3
-module load cuda-toolkit
-module load cudnn
+source load_modules.sh
 ```
 
 ### Chat CLI
