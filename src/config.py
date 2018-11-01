@@ -45,7 +45,7 @@ CONTRACTIONS = [("i ' m ", "i 'm "), ("' d ", "'d "), ("' s ", "'s "),
 NUM_LAYERS = 3        # the number of GRU/LSTM layers
 USE_LSTM = True       # use GRU or LSTM cell
 EMBEDDING_SIZE = 256  # the length of the embedding vector for each symbol
-ATTENTION_HEADS = 5
+ATTENTION_HEADS = 5   # the number of hidden states that read from the attention state
 BATCH_SIZE = 64
 
 LR = 0.01

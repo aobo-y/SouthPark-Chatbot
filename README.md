@@ -31,3 +31,13 @@ The model will restore the previously trained weights and continue training up o
 python src/chatbot.py --mode train
 ```
 
+### Tune parameters
+
+The following model parameters in the `config.py` file can be tuned:<br>
+* NUM_LAYERS: the number of GRU/LSTM layers
+* USE_LSTM: use GRU or LSTM cell
+* EMBEDDING_SIZE: the length of the embedding vector for each symbol
+* ATTENTION_HEADS: the number of hidden states that read from the attention state
+* BATCH_SIZE: the size of training data per iteration
+* LR: learning rate of the model
+
