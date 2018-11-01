@@ -6,12 +6,16 @@ import tensorflow as tf
 import config
 
 class ChatBotModel:
-    def __init__(self, forward_only, batch_size):
+    def __init__(self, forward_only, batch_size, use_lstm=True):
         """forward_only: if set, we do not construct the backward pass in the model.
         """
         print('Initialize new model')
         self.fw_only = forward_only
         self.batch_size = batch_size
+        single_cell = tf.contrib.rnn.GRUCell(config.EMBEDDING_SIZE)
+        if use_lstm:
+          single_cell = tf.nn.rnn_cell.BasicLSTMCell(config.EMBEDDING_SIZE)
+        self.cell = tf.contrib.rnn.MultiRNNCell([single_cell for _ in range(config.NUM_LAYERS)])
 
     def _create_placeholders(self):
         # Feeds for inputs. It's a list of placeholders
@@ -44,9 +48,6 @@ class ChatBotModel:
                                               num_sampled=config.NUM_SAMPLES, 
                                               num_classes=config.DEC_VOCAB)
         self.softmax_loss_function = sampled_loss
-
-        single_cell = tf.contrib.rnn.GRUCell(config.EMBEDDING_SIZE)
-        self.cell = tf.contrib.rnn.MultiRNNCell([single_cell for _ in range(config.NUM_LAYERS)])
 
     def _create_loss(self):
         print('Creating loss... \nIt might take a couple of minutes depending on how many buckets you have.')

@@ -23,7 +23,7 @@ OUTPUT_FILE = 'output_convo.txt'
 PROCESSED_PATH = 'processed'
 CPT_PATH = 'checkpoints'
 
-MAX_ITER = 1000
+MAX_ITER = 10000
 
 THRESHOLD = 2
 
@@ -42,12 +42,13 @@ CONTRACTIONS = [("i ' m ", "i 'm "), ("' d ", "'d "), ("' s ", "'s "),
 				("can ' t ", "ca n't "), ("shouldn ' t ", "should n't "), ("wouldn ' t ", "would n't "),
 				("' ve ", "'ve "), ("' re ", "'re "), ("in ' ", "in' ")]
 
-NUM_LAYERS = 4        # the number of GRU layers
-EMBEDDING_SIZE = 300  # the length of the embedding vector for each symbol
+NUM_LAYERS = 3        # the number of GRU/LSTM layers
+USE_LSTM = True       # use GRU or LSTM cell
+EMBEDDING_SIZE = 256  # the length of the embedding vector for each symbol
 ATTENTION_HEADS = 5
 BATCH_SIZE = 64
 
-LR = 0.5
+LR = 0.01
 MAX_GRAD_NORM = 5.0
 
 NUM_SAMPLES = 512

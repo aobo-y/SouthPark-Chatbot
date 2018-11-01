@@ -130,7 +130,7 @@ def train():
     """ Train the bot """
     test_buckets, data_buckets, train_buckets_scale = _get_buckets()
     # in train mode, we need to create the backward path, so forwrad_only is False
-    model = ChatBotModel(False, config.BATCH_SIZE)
+    model = ChatBotModel(False, config.BATCH_SIZE, config.USE_LSTM)
     model.build_graph()
 
     saver = tf.train.Saver()
@@ -200,7 +200,7 @@ def chat():
     _, enc_vocab = data.load_vocab(os.path.join(config.PROCESSED_PATH, 'vocab.enc'))
     inv_dec_vocab, _ = data.load_vocab(os.path.join(config.PROCESSED_PATH, 'vocab.dec'))
 
-    model = ChatBotModel(True, batch_size=1)
+    model = ChatBotModel(True, batch_size=1, config.USE_LSTM)
     model.build_graph()
 
     saver = tf.train.Saver()
