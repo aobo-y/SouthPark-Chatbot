@@ -23,6 +23,8 @@ OUTPUT_FILE = 'output_convo.txt'
 PROCESSED_PATH = 'processed'
 CPT_PATH = 'checkpoints'
 
+MAX_ITER = 1000
+
 THRESHOLD = 2
 
 PAD_ID = 0
@@ -32,7 +34,7 @@ EOS_ID = 3
 
 TESTSET_SIZE = 25000
 
-BUCKETS = [(19, 19), (28, 28), (33, 33), (40, 43), (50, 53), (60, 63)]
+BUCKETS = [(8, 10), (12, 14), (16, 19)]
 
 
 CONTRACTIONS = [("i ' m ", "i 'm "), ("' d ", "'d "), ("' s ", "'s "),
@@ -40,8 +42,9 @@ CONTRACTIONS = [("i ' m ", "i 'm "), ("' d ", "'d "), ("' s ", "'s "),
 				("can ' t ", "ca n't "), ("shouldn ' t ", "should n't "), ("wouldn ' t ", "would n't "),
 				("' ve ", "'ve "), ("' re ", "'re "), ("in ' ", "in' ")]
 
-NUM_LAYERS = 3
-HIDDEN_SIZE = 256
+NUM_LAYERS = 4        # the number of GRU layers
+EMBEDDING_SIZE = 300  # the length of the embedding vector for each symbol
+ATTENTION_HEADS = 5
 BATCH_SIZE = 64
 
 LR = 0.5

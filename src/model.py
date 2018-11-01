@@ -31,7 +31,7 @@ class ChatBotModel:
         # If we use sampled softmax, we need an output projection.
         # Sampled softmax only makes sense if we sample less than vocabulary size.
         if config.NUM_SAMPLES > 0 and config.NUM_SAMPLES < config.DEC_VOCAB:
-            w = tf.get_variable('proj_w', [config.HIDDEN_SIZE, config.DEC_VOCAB])
+            w = tf.get_variable('proj_w', [config.EMBEDDING_SIZE, config.DEC_VOCAB])
             b = tf.get_variable('proj_b', [config.DEC_VOCAB])
             self.output_projection = (w, b)
 
@@ -45,7 +45,7 @@ class ChatBotModel:
                                               num_classes=config.DEC_VOCAB)
         self.softmax_loss_function = sampled_loss
 
-        single_cell = tf.contrib.rnn.GRUCell(config.HIDDEN_SIZE)
+        single_cell = tf.contrib.rnn.GRUCell(config.EMBEDDING_SIZE)
         self.cell = tf.contrib.rnn.MultiRNNCell([single_cell for _ in range(config.NUM_LAYERS)])
 
     def _create_loss(self):
@@ -58,7 +58,8 @@ class ChatBotModel:
                     encoder_inputs, decoder_inputs, self.cell,
                     num_encoder_symbols=config.ENC_VOCAB,
                     num_decoder_symbols=config.DEC_VOCAB,
-                    embedding_size=config.HIDDEN_SIZE,
+                    embedding_size=config.EMBEDDING_SIZE,
+                    num_heads=config.ATTENTION_HEADS,
                     output_projection=self.output_projection,
                     feed_previous=do_decode)
 
@@ -84,7 +85,7 @@ class ChatBotModel:
                                         self.targets,
                                         self.decoder_masks,
                                         config.BUCKETS,
-                                        lambda x, y: _seq2seq_f(x, y, False),
+                                        lambda x, y: _seq2seq_f(x, y, True),
                                         softmax_loss_function=self.softmax_loss_function)
         print('Time:', time.time() - start)
 

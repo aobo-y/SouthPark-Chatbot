@@ -6,13 +6,6 @@ https://github.com/tensorflow/models/blob/master/tutorials/rnn/translate/
 
 Sequence to sequence model by Cho et al.(2014)
 
-Created by Chip Huyen (chiphuyen@cs.stanford.edu)
-CS20: "TensorFlow for Deep Learning Research"
-cs20.stanford.edu
-
-This file contains the code to run the model.
-
-See README.md for instruction on how to run the starter code.
 """
 import argparse
 import os
@@ -159,6 +152,9 @@ def train():
             _, step_loss, _ = run_step(sess, model, encoder_inputs, decoder_inputs, decoder_masks, bucket_id, False)
             total_loss += step_loss
             iteration += 1
+            
+            if iteration == config.MAX_ITER:
+              break
 
             if iteration % skip_step == 0:
                 print('Iter {}: loss {}, time {}'.format(iteration, total_loss/skip_step, time.time() - start))
@@ -170,6 +166,7 @@ def train():
                     _eval_test_set(sess, model, test_buckets)
                     start = time.time()
                 sys.stdout.flush()
+            
 
 def _get_user_input():
     """ Get user's input, which will be transformed into encoder input later """
@@ -198,7 +195,7 @@ def _construct_response(output_logits, inv_dec_vocab):
     return " ".join([tf.compat.as_str(inv_dec_vocab[output]) for output in outputs])
 
 def chat():
-    """ in test mode, we don't to create the backward path
+    """ in test mode, we don't create the backward path
     """
     _, enc_vocab = data.load_vocab(os.path.join(config.PROCESSED_PATH, 'vocab.enc'))
     inv_dec_vocab, _ = data.load_vocab(os.path.join(config.PROCESSED_PATH, 'vocab.dec'))
