@@ -14,17 +14,20 @@ class ChatBotModel:
         self.batch_size = batch_size
         single_cell = tf.contrib.rnn.GRUCell(config.EMBEDDING_SIZE)
         if use_lstm:
-          single_cell = tf.nn.rnn_cell.BasicLSTMCell(config.EMBEDDING_SIZE)
+          single_cell = tf.nn.rnn_cell.LSTMCell(config.EMBEDDING_SIZE)
         """
         TODO:
         Add dropout layer here, maybe?
         """
-        keep_prob = tf.placeholder(tf.float32)
-        drop_out_cell = tf.nn.dropout(single_cell, keep_prob)
+        input_keep_prob=1.0
+        output_keep_prob=1.0
+        state_keep_prob=1.0
+        drop_out_cell = tf.nn.rnn_cell.DropoutWrapper(single_cell, input_keep_prob, output_keep_prob, state_keep_prob)
         cells = [None] * 2 * config.NUM_LAYERS
-        for i in range(config.NUM_LAYERS, step = 2):
+        for i in range(0, config.NUM_LAYERS, 2):
             cells[i] = single_cell
             cells[i + 1] = drop_out_cell
+            print(cells[i], cells[i + 1])
         self.cell = tf.contrib.rnn.MultiRNNCell(cells)
 
     def _create_placeholders(self):
