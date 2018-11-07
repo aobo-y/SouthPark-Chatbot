@@ -19,7 +19,13 @@ class ChatBotModel:
         TODO:
         Add dropout layer here, maybe?
         """
-        self.cell = tf.contrib.rnn.MultiRNNCell([single_cell for _ in range(config.NUM_LAYERS)])
+        keep_prob = tf.placeholder(tf.float32)
+        drop_out_cell = tf.nn.dropout(single_cell, keep_prob)
+        cells = [None] * 2 * config.NUM_LAYERS
+        for i in range(config.NUM_LAYERS, step = 2):
+            cells[i] = single_cell
+            cells[i + 1] = drop_out_cell
+        self.cell = tf.contrib.rnn.MultiRNNCell(cells)
 
     def _create_placeholders(self):
         # Feeds for inputs. It's a list of placeholders
