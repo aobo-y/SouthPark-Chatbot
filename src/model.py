@@ -17,18 +17,13 @@ class ChatBotModel:
           single_cell = tf.nn.rnn_cell.LSTMCell(config.EMBEDDING_SIZE)
         """
         TODO:
-        Add dropout layer here, maybe?
+        dropout layer should be able to config in config.py
         """
         input_keep_prob=1.0
         output_keep_prob=1.0
         state_keep_prob=1.0
         drop_out_cell = tf.nn.rnn_cell.DropoutWrapper(single_cell, input_keep_prob, output_keep_prob, state_keep_prob)
-        cells = [None] * 2 * config.NUM_LAYERS
-        for i in range(0, config.NUM_LAYERS, 2):
-            cells[i] = single_cell
-            cells[i + 1] = drop_out_cell
-            print(cells[i], cells[i + 1])
-        self.cell = tf.contrib.rnn.MultiRNNCell(cells)
+        self.cell = tf.contrib.rnn.MultiRNNCell([drop_out_cell for _ in range(config.NUM_LAYERS)])
 
     def _create_placeholders(self):
         # Feeds for inputs. It's a list of placeholders
