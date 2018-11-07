@@ -15,6 +15,10 @@ class ChatBotModel:
         single_cell = tf.contrib.rnn.GRUCell(config.EMBEDDING_SIZE)
         if use_lstm:
           single_cell = tf.nn.rnn_cell.BasicLSTMCell(config.EMBEDDING_SIZE)
+        """
+        TODO:
+        Add dropout layer here, maybe?
+        """
         self.cell = tf.contrib.rnn.MultiRNNCell([single_cell for _ in range(config.NUM_LAYERS)])
 
     def _create_placeholders(self):

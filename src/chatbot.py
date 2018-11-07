@@ -186,6 +186,9 @@ def _construct_response(output_logits, inv_dec_vocab):
 
     This is a greedy decoder - outputs are just argmaxes of output_logits.
     """
+    """
+    TODO: change to beam search
+    """
     print(output_logits[0])
     outputs = [int(np.argmax(logit, axis=1)) for logit in output_logits]
     # If there is an EOS symbol in outputs, cut them at that point.
