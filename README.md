@@ -21,7 +21,7 @@ python3 src/chatbot.py --mode chat # chat on school server
 ### Chat CLI
 
 Start the command line interaction with the chat bot.
-```py
+```bash
 python src/chatbot.py --mode chat
 ```
 
@@ -29,7 +29,7 @@ python src/chatbot.py --mode chat
 
 The model will restore the previously trained weights and continue training up on that. To start training from scratch, please delete all the checkpoints in the checkpoints folder.
 
-```py
+```bash
 python src/chatbot.py --mode train
 ```
 
