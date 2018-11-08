@@ -60,6 +60,11 @@ def get_convos():
 
 def question_answers(id2line, convos):
     """ Divide the dataset into two sets: questions and answers. """
+    """
+    TODO: the way of specify Q & A
+    Remember in our data, we have scenario specifiers
+    so improve this part plz
+    """
     questions, answers = [], []
     for convo in convos:
         for index, line in enumerate(convo[:-1]):

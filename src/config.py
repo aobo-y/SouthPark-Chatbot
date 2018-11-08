@@ -44,6 +44,10 @@ CONTRACTIONS = [("i ' m ", "i 'm "), ("' d ", "'d "), ("' s ", "'s "),
 
 NUM_LAYERS = 3        # the number of GRU/LSTM layers
 USE_LSTM = True       # use GRU or LSTM cell
+USE_DROPOUT = True    # if operator adding dropout to inputs and outputs of the given cell.
+DROPOUT_INPUT_KEPP_PROB = 0.9 # [0, 1], input keep probability; if it is constant and 1, no input dropout will be added
+DROPOUT_OUTPUT_KEEP_PROB = 0.9 # [0, 1], output keep probability; if it is constant and 1, no output dropout will be added
+DROPOUT_STATE_KEPP_PROB = 0.99 # [0, 1], state dropout is performed on the outgoing states of the cell
 EMBEDDING_SIZE = 256  # the length of the embedding vector for each symbol
 ATTENTION_HEADS = 5   # the number of hidden states that read from the attention state
 BATCH_SIZE = 64

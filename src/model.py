@@ -14,7 +14,13 @@ class ChatBotModel:
         self.batch_size = batch_size
         single_cell = tf.contrib.rnn.GRUCell(config.EMBEDDING_SIZE)
         if use_lstm:
-          single_cell = tf.nn.rnn_cell.BasicLSTMCell(config.EMBEDDING_SIZE)
+          single_cell = tf.nn.rnn_cell.LSTMCell(config.EMBEDDING_SIZE)
+        if config.USE_DROPOUT:
+            single_cell = tf.nn.rnn_cell.DropoutWrapper(
+                single_cell, 
+                config.DROPOUT_INPUT_KEPP_PROB, 
+                config.DROPOUT_OUTPUT_KEEP_PROB, 
+                config.DROPOUT_STATE_KEPP_PROB)
         self.cell = tf.contrib.rnn.MultiRNNCell([single_cell for _ in range(config.NUM_LAYERS)])
 
     def _create_placeholders(self):
