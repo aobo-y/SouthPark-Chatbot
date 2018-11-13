@@ -7,24 +7,25 @@ import config
 
 
 class ChatBotModel:
-    def __init__(self, forward_only, batch_size, use_lstm=True, beam_search=True):
+    def __init__(self, forward_only, batch_size, use_lstm=True):
         """forward_only: if set, we do not construct the backward pass in the model.
         """
         print('Initialize new model')
         self.fw_only = forward_only
         self.batch_size = batch_size
-        self.beam_search = beam_search
-        single_cell = tf.contrib.rnn.GRUCell(config.EMBEDDING_SIZE)
-        if use_lstm:
-            single_cell = tf.nn.rnn_cell.LSTMCell(config.EMBEDDING_SIZE)
-        if config.USE_DROPOUT:
-            single_cell = tf.nn.rnn_cell.DropoutWrapper(
-                single_cell,
-                config.DROPOUT_INPUT_KEPP_PROB,
-                config.DROPOUT_OUTPUT_KEEP_PROB,
-                config.DROPOUT_STATE_KEPP_PROB)
+        def _create_cell():
+          single_cell = tf.contrib.rnn.GRUCell(config.EMBEDDING_SIZE)
+          if use_lstm:
+              single_cell = tf.nn.rnn_cell.LSTMCell(config.EMBEDDING_SIZE)
+          if config.USE_DROPOUT:
+              single_cell = tf.nn.rnn_cell.DropoutWrapper(
+                  single_cell,
+                  config.DROPOUT_INPUT_KEPP_PROB,
+                  config.DROPOUT_OUTPUT_KEEP_PROB,
+                  config.DROPOUT_STATE_KEPP_PROB)
+          return single_cell
         self.cell = tf.contrib.rnn.MultiRNNCell(
-            [single_cell for _ in range(config.NUM_LAYERS)])
+            [_create_cell() for _ in range(config.NUM_LAYERS)])
 
     def _create_placeholders(self):
         # Feeds for inputs. It's a list of placeholders
@@ -35,8 +36,6 @@ class ChatBotModel:
                                for i in range(config.BUCKETS[-1][1] + 1)]
         self.decoder_masks = [tf.placeholder(tf.float32, shape=[None], name='mask{}'.format(i))
                               for i in range(config.BUCKETS[-1][1] + 1)]
-        # self.targets = [tf.placeholder(tf.float32, shape=[None], name='target{}'.format(i))
-        #                 for i in range(config.BUCKETS[-1][1] + 1)]
 
         # Our targets are decoder inputs shifted by one (to ignore <GO> symbol)
         self.targets = self.decoder_inputs[1:]
@@ -79,34 +78,21 @@ class ChatBotModel:
                 output_projection=self.output_projection,
                 feed_previous=do_decode)
 
-        # if self.fw_only:
-        #     self.outputs, self.losses = tf.contrib.legacy_seq2seq.model_with_buckets(
-        #                                 self.encoder_inputs,
-        #                                 self.decoder_inputs,
-        #                                 self.targets,
-        #                                 self.decoder_masks,
-        #                                 config.BUCKETS,
-        #                                 lambda x, y: _seq2seq_f(x, y, True),
-        #                                 softmax_loss_function=self.softmax_loss_function)
-        #     # If we use output projection, we need to project outputs for decoding.
-        #     if self.output_projection:
-        #         for bucket in range(len(config.BUCKETS)):
-        #             self.outputs[bucket] = [tf.matmul(output,
-        #                                     self.output_projection[0]) + self.output_projection[1]
-        #                                     for output in self.outputs[bucket]]
         if self.fw_only:
-            if self.beam_search:  # 如果是beam_search的话，则调用自己写的embedding_attention_seq2seq函数，而不是legacy_seq2seq下面的
-                self.beam_outputs, _, self.beam_path, self.beam_symbol = embedding_attention_seq2seq(
-                    self.encoder_inputs,
-                    self.decoder_inputs,
-                    self.cell,
-                    num_encoder_symbols=config.ENC_VOCAB,
-                    num_decoder_symbols=config.DEC_VOCAB,
-                    embedding_size=config.EMBEDDING_SIZE,
-                    output_projection=self.output_projection,
-                    feed_previous=True)
-            else:
-                pass  # Write me in the future!
+            self.outputs, self.losses = tf.contrib.legacy_seq2seq.model_with_buckets(
+                                        self.encoder_inputs,
+                                        self.decoder_inputs,
+                                        self.targets,
+                                        self.decoder_masks,
+                                        config.BUCKETS,
+                                        lambda x, y: _seq2seq_f(x, y, True),
+                                        softmax_loss_function=self.softmax_loss_function)
+            # If we use output projection, we need to project outputs for decoding.
+            if self.output_projection:
+                for bucket in range(len(config.BUCKETS)):
+                    self.outputs[bucket] = [tf.matmul(output,
+                                            self.output_projection[0]) + self.output_projection[1]
+                                            for output in self.outputs[bucket]]
         else:
             self.outputs, self.losses = tf.contrib.legacy_seq2seq.model_with_buckets(
                                         self.encoder_inputs,
@@ -117,24 +103,6 @@ class ChatBotModel:
                                         lambda x, y: _seq2seq_f(x, y, True),
                                         softmax_loss_function=self.softmax_loss_function)
         print('Time:', time.time() - start)
-        # else:
-        #     # 因为不需要将output作为下一时刻的输入，所以不用output_projection
-        #     self.outputs, _ = tf.contrib.legacy_seq2seq.embedding_attention_seq2seq(
-        #         self.encoder_inputs, 
-        #         self.decoder_inputs, 
-        #         self.cell, 
-        #         num_encoder_symbols=config.ENC_VOCAB,
-        #         num_decoder_symbols=config.DEC_VOCAB, 
-        #         embedding_size=config.EMBEDDING_SIZE, 
-        #         num_heads=config.ATTENTION_HEADS,
-        #         output_projection=self.output_projection,
-        #         feed_previous=False)
-        #     print("outputs:" + '-' * 77)
-        #     print(self.outputs)
-        #     self.losses = tf.contrib.legacy_seq2seq.sequence_loss(
-        #         self.outputs, self.decoder_masks, self.targets, softmax_loss_function=self.softmax_loss_function)
-        #     print("losses" + '-' * 77)
-        #     print(self.losses)
 
     def _creat_optimizer(self):
         print('Create optimizer... \nIt might take a couple of minutes depending on how many buckets you have.')

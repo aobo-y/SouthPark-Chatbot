@@ -34,6 +34,7 @@ EOS_ID = 3
 
 TESTSET_SIZE = 25000
 
+# Why bucket? See https://www.zhihu.com/question/42057513
 BUCKETS = [(8, 10), (12, 14), (16, 19)]
 
 
