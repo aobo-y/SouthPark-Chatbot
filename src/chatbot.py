@@ -196,7 +196,6 @@ def _construct_response(output_logits, inv_dec_vocab):
     return " ".join([tf.compat.as_str(inv_dec_vocab[output]) for output in outputs])
 
 def _pick_topN_response(output_logits, inv_dec_vocab, topN = 4):
-    outputs = [int(np.argmax(logit, axis=1)) for logit in output_logits]
     outputs = [np.argsort(logit, axis=1)[0][-topN:] for logit in output_logits]
     # If there is an EOS symbol in outputs, cut them at that point.
     # for output in outputs:
@@ -205,8 +204,7 @@ def _pick_topN_response(output_logits, inv_dec_vocab, topN = 4):
     # Print out sentence corresponding to outputs.
     for i in range(topN):
         response = " ".join([tf.compat.as_str(inv_dec_vocab[output[i]]) for output in outputs])
-        print(response, '\n')
-    # return [[" ".join([tf.compat.as_str(inv_dec_vocab[int(output[i])]) for output in outputs])] for i in range(topN)]
+        print(str(i) + '. ' + response, '\n')
     return ""
 
 def chat():

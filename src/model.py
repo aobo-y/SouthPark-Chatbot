@@ -111,12 +111,14 @@ class ChatBotModel:
                 0, dtype=tf.int32, trainable=False, name='global_step')
 
             if not self.fw_only:
-                self.optimizer = tf.train.GradientDescentOptimizer(config.LR)
                 trainables = tf.trainable_variables()
                 self.gradient_norms = []
                 self.train_ops = []
                 start = time.time()
+                LR = config.LR
                 for bucket in range(len(config.BUCKETS)):
+                    self.optimizer = tf.train.GradientDescentOptimizer(LR)
+                    LR += 0.01
                     clipped_grads, norm = tf.clip_by_global_norm(
                       tf.gradients(
                         self.losses[bucket], 
