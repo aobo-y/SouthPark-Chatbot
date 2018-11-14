@@ -186,9 +186,7 @@ def _construct_response(output_logits, inv_dec_vocab):
 
     This is a greedy decoder - outputs are just argmaxes of output_logits.
     """
-    """
-    TODO: change to beam search
-    """
+    return _pick_topN_response(output_logits, inv_dec_vocab, topN=4)
     print(output_logits[0])
     outputs = [int(np.argmax(logit, axis=1)) for logit in output_logits]
     # If there is an EOS symbol in outputs, cut them at that point.
@@ -196,6 +194,18 @@ def _construct_response(output_logits, inv_dec_vocab):
         outputs = outputs[:outputs.index(config.EOS_ID)]
     # Print out sentence corresponding to outputs.
     return " ".join([tf.compat.as_str(inv_dec_vocab[output]) for output in outputs])
+
+def _pick_topN_response(output_logits, inv_dec_vocab, topN = 4):
+    outputs = [np.argsort(logit, axis=1)[0][-topN:] for logit in output_logits]
+    # If there is an EOS symbol in outputs, cut them at that point.
+    # for output in outputs:
+    #     if config.EOS_ID in output:
+    #         output = output[:output.index(config.EOS_ID)]
+    # Print out sentence corresponding to outputs.
+    for i in range(topN):
+        response = " ".join([tf.compat.as_str(inv_dec_vocab[output[i]]) for output in outputs])
+        print(str(i) + '. ' + response, '\n')
+    return ""
 
 def chat():
     """ in test mode, we don't create the backward path
@@ -239,7 +249,7 @@ def chat():
                                            decoder_masks, bucket_id, True)
             response = _construct_response(output_logits, inv_dec_vocab)
             print(response)
-            output_file.write('BOT ++++ ' + response + '\n')
+            # output_file.write('BOT ++++ ' + response + '\n')
         output_file.write('=============================================\n')
         output_file.close()
 
