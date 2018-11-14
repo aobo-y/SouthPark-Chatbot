@@ -22,8 +22,9 @@ python3 src/chatbot.py --mode chat # chat on school server
 nohup python3 src/chatbot.py --mode train &
 # All the output will be redirect to a file called *nohup.out*
 cat nohup.out # see the redirect output
-# To terminate the training in the background, use
-kill -INT `ps -ef |grep jc4mf |grep python3 |grep -v grep |awk '{print $2}'`
+# To terminate the training in the background, use the command below
+# remember to replace *computeID* to your computeID
+kill -INT `ps -ef |grep computeID |grep python3 |grep -v grep |awk '{print $2}'`
 ```
 
 
