@@ -186,7 +186,7 @@ def _construct_response(output_logits, inv_dec_vocab):
 
     This is a greedy decoder - outputs are just argmaxes of output_logits.
     """
-    return _construct_response_list(output_logits, inv_dec_vocab)
+    return _pick_topN_response(output_logits, inv_dec_vocab, topN=4)
     print(output_logits[0])
     outputs = [int(np.argmax(logit, axis=1)) for logit in output_logits]
     # If there is an EOS symbol in outputs, cut them at that point.
@@ -195,9 +195,8 @@ def _construct_response(output_logits, inv_dec_vocab):
     # Print out sentence corresponding to outputs.
     return " ".join([tf.compat.as_str(inv_dec_vocab[output]) for output in outputs])
 
-def _construct_response_list(output_logits, inv_dec_vocab, topN = 4):
+def _pick_topN_response(output_logits, inv_dec_vocab, topN = 4):
     outputs = [int(np.argmax(logit, axis=1)) for logit in output_logits]
-    print(outputs)
     outputs = [np.argsort(logit, axis=1)[0][-topN:] for logit in output_logits]
     # If there is an EOS symbol in outputs, cut them at that point.
     # for output in outputs:
