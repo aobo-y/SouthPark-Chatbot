@@ -10,13 +10,24 @@ pip install -r requirements.txt
 
 ## Usage
 
-*If you want to run it on the school server, run the following command to load the some modules first*
+### Run it on school server
 
 ```bash
-source scripts/server_env
+source scripts/server_env # load some modules
 python3 src/chatbot.py --mode train # train on school server
 python3 src/chatbot.py --mode chat # chat on school server
+
+# This command below can keep your chatbot training in the background
+# even if you have disconnected to the server
+nohup python3 src/chatbot.py --mode train &
+# All the output will be redirect to a file called *nohup.out*
+cat nohup.out # see the redirect output
+# To terminate the training in the background, use the command below
+# remember to replace *computeID* to your computeID
+kill -INT `ps -ef |grep computeID |grep python3 |grep -v grep |awk '{print $2}'`
 ```
+
+
 
 ### Chat CLI
 

@@ -118,7 +118,7 @@ class ChatBotModel:
                 LR = config.LR
                 for bucket in range(len(config.BUCKETS)):
                     self.optimizer = tf.train.GradientDescentOptimizer(LR)
-                    LR += 0.01
+                    LR += 0.003
                     clipped_grads, norm = tf.clip_by_global_norm(
                       tf.gradients(
                         self.losses[bucket], 
