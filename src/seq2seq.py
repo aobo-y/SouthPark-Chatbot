@@ -1,9 +1,4 @@
 # -*- coding: utf-8 -*-
-"""
-Created on %(date)s
-
-@author: %(Wanyu Du)s
-"""
 
 from __future__ import absolute_import
 from __future__ import division
@@ -15,8 +10,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 import random
 import os
-
 from data_util import batch2TrainData, normalizeString, indexesFromSentence
+
 
 USE_CUDA = torch.cuda.is_available()
 device = torch.device("cuda" if USE_CUDA else "cpu")
@@ -24,12 +19,30 @@ device = torch.device("cuda" if USE_CUDA else "cpu")
 MAX_LENGTH = 10  # Maximum sentence length to consider
 MIN_COUNT = 3    # Minimum word count threshold for trimming
 
+# Default word tokens
 PAD_token = 0
 SOS_token = 1
 EOS_token = 2
 
 
 class EncoderRNN(nn.Module):
+  """
+  Our encoder is a multi-layered Gated Recurrent Unit, invented by Cho et al. in 2014. 
+  The outputs of each network are summed at each time step. 
+  
+  Inputs:
+    input_seq: batch of input sentences; shape=(max_length, batch_size)
+    input_lengths: list of sentence lengths corresponding to each sentence in the batch; 
+                   shape=(batch_size)
+    hidden: hidden state; shape=(n_layers x num_directions, batch_size, hidden_size)
+  
+  Outputs:
+    outputs: output features from the last hidden layer of the GRU (sum of bidirectional outputs); 
+             shape=(max_length, batch_size, hidden_size)
+    hidden: updated hidden state from GRU; 
+            shape=(n_layers x num_directions, batch_size, hidden_size)
+  """
+  
   def __init__(self, hidden_size, embedding, n_layers=1, dropout=0.5):
     super(EncoderRNN, self).__init__()
     self.n_layers = n_layers
@@ -60,17 +73,23 @@ class EncoderRNN(nn.Module):
   
   
 class Attn(torch.nn.Module):
+  """
+  We implement the “Attention Layer” proposed by Luong et al. in 2015 as a separate nn.Module called Attn. 
+  The output of this module is a softmax normalized weights tensor of shape (batch_size, 1, max_length).
+  
+  """
+  
   def __init__(self, method, hidden_size):
     super(Attn, self).__init__()
+    self.hidden_size = hidden_size
     self.method = method
     if self.method not in ['dot', 'general', 'concat']:
       raise ValueError(self.method, 'is not an appropriate attention method.')
-    self.hidden_size = hidden_size
     if self.method == 'general':
       self.attn = torch.nn.Linear(self.hidden_size, hidden_size)
     elif self.method == 'concat':
       self.attn = torch.nn.Linear(self.hidden_size*2, hidden_size)
-      self.v = torch.nn.Parameter(torch.FloatStorage(hidden_size))
+      self.v = torch.nn.Parameter(torch.FloatTensor(hidden_size))
       
   def dot_score(self, hidden, encoder_output):
     return torch.sum(hidden*encoder_output, dim=2)
@@ -100,6 +119,21 @@ class Attn(torch.nn.Module):
   
   
 class LuongAttnDecoderRNN(nn.Module):
+  """
+  For the decoder, we manually feed our batch one time step at a time. 
+  This means that our embedded word tensor and GRU output will both have shape (1, batch_size, hidden_size).
+  
+  Inputs:
+    input_step: one time step (one word) of input sequence batch; shape=(1, batch_size)
+    last_hidden: final hidden layer of GRU; shape=(n_layers x num_directions, batch_size, hidden_size)
+    encoder_outputs: encoder model’s output; shape=(max_length, batch_size, hidden_size)
+
+  Outputs:
+    output: softmax normalized tensor giving probabilities of each word being the correct next word in the decoded sequence; 
+            shape=(batch_size, voc.num_words)
+    hidden: final hidden state of GRU; shape=(n_layers x num_directions, batch_size, hidden_size)
+  """
+  
   def __init__(self, attn_model, embedding, hidden_size, output_size, n_layers=1, dropout=0.5):
     super(LuongAttnDecoderRNN, self).__init__()
     self.attn_model = attn_model
@@ -141,6 +175,19 @@ class LuongAttnDecoderRNN(nn.Module):
   
   
 class GreedySearchDecoder(nn.Module):
+  """
+  Greedy decoding is the decoding method that we use during training when we are NOT using teacher forcing.
+  
+  Inputs:
+    input_seq: an input sequence of shape (input_seq length, 1)
+    input_length: a scalar input length tensor
+    max_length: a max_length to bound the response sentence length. 
+  
+  Outputs:
+    all_tokens: collections of words tokens
+    all_scores: collections of words scores
+  """
+  
   def __init__(self, encoder, decoder):
     super(GreedySearchDecoder, self).__init__()
     self.encoder = encoder
@@ -174,16 +221,16 @@ class GreedySearchDecoder(nn.Module):
 def maskNLLLoss(inp, target, mask):
   # Calculate our loss based on our decoder’s output tensor, the target tensor, 
   # and a binary mask tensor describing the padding of the target tensor.
-  nTotal = mask.sum()
-  crossEntropy = -torch.log(torch.gather(inp, 1, target.veiw(-1, 1)))
+  nTotal = mask.sum().float()
+  crossEntropy = -torch.log(torch.gather(inp, 1, target.view(-1, 1)))
   loss = crossEntropy.masked_select(mask).mean()
   loss = loss.to(device)
   return loss, nTotal.mean()
 
 
 def train(input_variable, lengths, target_variable, mask, max_target_len, 
-          encoder, decoder, encoder_optimizer, decoder_optimizer, batch_size,
-          clip, teacher_forcing_ratio, max_length=MAX_LENGTH):
+          encoder, decoder, embedding, encoder_optimizer, decoder_optimizer, 
+          batch_size, clip, teacher_forcing_ratio, max_length=MAX_LENGTH):
   # Zero gradients
   encoder_optimizer.zero_grad()
   decoder_optimizer.zero_grad()
@@ -195,9 +242,9 @@ def train(input_variable, lengths, target_variable, mask, max_target_len,
   mask = mask.to(device)
   
   # Initialize variables
-  loss = 0
+  loss = 0.
   print_loss = []
-  n_totals = 0
+  n_totals = 0.
   
   # Forward pass through encoder
   encoder_outputs, encoder_hidden = encoder(input_variable, lengths)
@@ -219,7 +266,7 @@ def train(input_variable, lengths, target_variable, mask, max_target_len,
       # Teacher forcing: next input is current target
       decoder_input = target_variable[t].view(1, -1)
       # Calculate and accumulate loss
-      mask_loss, nTotal = maskNLLLoss(decoder_input, target_variable[t], mask[t])
+      mask_loss, nTotal = maskNLLLoss(decoder_output, target_variable[t], mask[t])
       loss += mask_loss
       print_loss.append(mask_loss.item()*nTotal)
       n_totals += nTotal
@@ -231,7 +278,7 @@ def train(input_variable, lengths, target_variable, mask, max_target_len,
       decoder_input = torch.LongTensor([[topi[i][0] for i in range(batch_size)]])
       decoder_input = decoder_input.to(device)
       # Calculate and accumulate loss
-      mask_loss, nTotal = maskNLLLoss(decoder_input, target_variable[t], mask[t])
+      mask_loss, nTotal = maskNLLLoss(decoder_output, target_variable[t], mask[t])
       loss += mask_loss
       print_loss.append(mask_loss.item()*nTotal)
       n_totals += nTotal
@@ -253,6 +300,13 @@ def train(input_variable, lengths, target_variable, mask, max_target_len,
 def trainIters(model_name, voc, pairs, encoder, decoder, encoder_optimizer, decoder_optimizer, 
                embedding, encoder_n_layers, decoder_n_layers, hidden_size, save_dir, n_iteration, batch_size,
                print_every, save_every, clip, teacher_forcing_ratio, corpus_name, loadFilename):
+  """
+  When we save our model, we save a tarball containing the encoder and decoder state_dicts (parameters), 
+  the optimizers’ state_dicts, the loss, the iteration, etc. 
+  After loading a checkpoint, we will be able to use the model parameters to run inference,
+  or we can continue training right where we left off.
+  """
+  
   # Load batches for each iteration
   training_batches = [batch2TrainData(voc, [random.choice(pairs) for _ in range(batch_size)])
                       for _ in range(n_iteration)]
@@ -274,8 +328,8 @@ def trainIters(model_name, voc, pairs, encoder, decoder, encoder_optimizer, deco
     input_variable, lengths, target_variable, mask, max_target_len = training_batch
     
     # run a training iteration with batch
-    loss = train(input_variable, lengths, target_variable, mask, max_target_len, encoder, 
-                 decoder, embedding, encoder_optimizer, decoder_optimizer, batch_size, 
+    loss = train(input_variable, lengths, target_variable, mask, max_target_len, 
+                 encoder, decoder, embedding, encoder_optimizer, decoder_optimizer, batch_size, 
                  clip, teacher_forcing_ratio)
     print_loss += loss
     

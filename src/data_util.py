@@ -1,9 +1,4 @@
 # -*- coding: utf-8 -*-
-"""
-Created on %(date)s
-
-@author: %(Wanyu Du)s
-"""
 
 from __future__ import absolute_import
 from __future__ import division
@@ -12,17 +7,10 @@ from __future__ import unicode_literals
 
 import torch
 import re
-import os
 import unicodedata
 import itertools
-import random
+import config
 
-MAX_LENGTH = 10  # Maximum sentence length to consider
-MIN_COUNT = 3    # Minimum word count threshold for trimming
-
-PAD_token = 0
-SOS_token = 1
-EOS_token = 2
 
 class Voc:
     def __init__(self, name):
@@ -30,7 +18,7 @@ class Voc:
         self.trimmed = False
         self.word2index = {}
         self.word2count = {}
-        self.index2word = {PAD_token: "PAD", SOS_token: "SOS", EOS_token: "EOS"}
+        self.index2word = {config.PAD_TOKEN: "PAD", config.SOS_TOKEN: "SOS", config.EOS_TOKEN: "EOS"}
         self.num_words = 3  # Count SOS, EOS, PAD
 
     def addSentence(self, sentence):
@@ -62,7 +50,7 @@ class Voc:
         # Reinitialize dictionaries
         self.word2index = {}
         self.word2count = {}
-        self.index2word = {PAD_token: "PAD", SOS_token: "SOS", EOS_token: "EOS"}
+        self.index2word = {config.PAD_TOKEN: "PAD", config.SOS_TOKEN: "SOS", config.EOS_TOKEN: "EOS"}
         self.num_words = 3 # Count default tokens
         for word in keep_words:
             self.addWord(word)
@@ -98,7 +86,7 @@ def readVocs(datafile, corpus_name):
 # Returns True iff both sentences in a pair 'p' are under the MAX_LENGTH threshold
 def filterPair(p):
     # Input sequences need to preserve the last word for EOS token
-    return len(p[0].split(' ')) < MAX_LENGTH and len(p[1].split(' ')) < MAX_LENGTH
+    return len(p[0].split(' ')) < config.MAX_LENGTH and len(p[1].split(' ')) < config.MAX_LENGTH
 
 
 # Filter pairs using filterPair condition
@@ -107,7 +95,7 @@ def filterPairs(pairs):
 
 
 # Using the functions defined above, return a populated voc object and pairs list
-def loadPrepareData(corpus, corpus_name, datafile, save_dir):
+def loadPrepareData(corpus, corpus_name, datafile):
     print("Start preparing training data ...")
     voc, pairs = readVocs(datafile, corpus_name)
     print("Read {!s} sentence pairs".format(len(pairs)))
@@ -121,9 +109,9 @@ def loadPrepareData(corpus, corpus_name, datafile, save_dir):
     return voc, pairs
 
 
-def trimRareWords(voc, pairs, MIN_COUNT):
+def trimRareWords(voc, pairs, min_count=config.MIN_COUNT):
     # Trim words used under the MIN_COUNT from the voc
-    voc.trim(MIN_COUNT)
+    voc.trim(min_count)
     # Filter out pairs with trimmed words
     keep_pairs = []
     for pair in pairs:
@@ -150,18 +138,18 @@ def trimRareWords(voc, pairs, MIN_COUNT):
     return keep_pairs
 
 def indexesFromSentence(voc, sentence):
-    return [voc.word2index[word] for word in sentence.split(' ')] + [EOS_token]
+    return [voc.word2index[word] for word in sentence.split(' ')] + [config.EOS_TOKEN]
 
 
-def zeroPadding(l, fillvalue=PAD_token):
+def zeroPadding(l, fillvalue=config.PAD_TOKEN):
     return list(itertools.zip_longest(*l, fillvalue=fillvalue))
 
-def binaryMatrix(l, value=PAD_token):
+def binaryMatrix(l, value=config.PAD_TOKEN):
     m = []
     for i, seq in enumerate(l):
         m.append([])
         for token in seq:
-            if token == PAD_token:
+            if token == config.PAD_TOKEN:
                 m[i].append(0)
             else:
                 m[i].append(1)
@@ -195,26 +183,3 @@ def batch2TrainData(voc, pair_batch):
     inp, lengths = inputVar(input_batch, voc)
     output, mask, max_target_len = outputVar(output_batch, voc)
     return inp, lengths, output, mask, max_target_len
-
-
-if __name__=='__main__':
-  corpus_name = "cornell movie-dialogs corpus"
-  corpus = os.path.join("data", corpus_name)
-  datafile = os.path.join(corpus, "formatted_movie_lines.txt")
-  
-  # Load/Assemble voc and pairs
-  save_dir = os.path.join("data", "save")
-  voc, pairs = loadPrepareData(corpus, corpus_name, datafile, save_dir)
-  # Trim voc and pairs
-  pairs = trimRareWords(voc, pairs, MIN_COUNT)
-  
-  # Example for validation
-  small_batch_size = 5
-  batches = batch2TrainData(voc, [random.choice(pairs) for _ in range(small_batch_size)])
-  input_variable, lengths, target_variable, mask, max_target_len = batches
-  
-  print("input_variable:", input_variable)
-  print("lengths:", lengths)
-  print("target_variable:", target_variable)
-  print("mask:", mask)
-  print("max_target_len:", max_target_len)
