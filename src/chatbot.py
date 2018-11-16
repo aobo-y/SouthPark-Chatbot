@@ -107,12 +107,12 @@ if __name__=='__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--mode', choices={'train', 'chat'}, default='train', help="mode. if not specified, it's in the train mode")
     args = parser.parse_args()
-    
     voc, pairs = load_data()
-    encoder, decoder, loadFilename, encoder_optimizer_sd, decoder_optimizer_sd, embedding = build_model(voc)
     
     if args.mode == 'train':
+      encoder, decoder, loadFilename, encoder_optimizer_sd, decoder_optimizer_sd, embedding = build_model(voc)
       train(encoder, decoder, loadFilename, encoder_optimizer_sd, decoder_optimizer_sd, embedding)
     elif args.mode == 'chat':
+      encoder, decoder, loadFilename, encoder_optimizer_sd, decoder_optimizer_sd, embedding = build_model(voc, load_checkpoint=True)
       chat(encoder, decoder, voc)
     
