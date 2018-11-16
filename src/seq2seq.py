@@ -10,19 +10,12 @@ import torch.nn as nn
 import torch.nn.functional as F
 import random
 import os
+import config
 from data_util import batch2TrainData, normalizeString, indexesFromSentence
 
 
 USE_CUDA = torch.cuda.is_available()
 device = torch.device("cuda" if USE_CUDA else "cpu")
-
-MAX_LENGTH = 10  # Maximum sentence length to consider
-MIN_COUNT = 3    # Minimum word count threshold for trimming
-
-# Default word tokens
-PAD_token = 0
-SOS_token = 1
-EOS_token = 2
 
 
 class EncoderRNN(nn.Module):
@@ -199,7 +192,7 @@ class GreedySearchDecoder(nn.Module):
     # Prepare encoder's final hidden layer to be first hidden input to the decoder
     decoder_hidden = encoder_hidden[:self.decoder.n_layers]
     # Initialize decoder input with SOS_token
-    decoder_input = torch.ones(1, 1, device=device, dtype=torch.long)*SOS_token
+    decoder_input = torch.ones(1, 1, device=device, dtype=torch.long)*config.SOS_TOKEN
     # Initialize tensors to append decoded words to
     all_tokens = torch.zeros([0], device=device, dtype=torch.long)
     all_scores = torch.zeros([0], device=device)
@@ -230,7 +223,7 @@ def maskNLLLoss(inp, target, mask):
 
 def train(input_variable, lengths, target_variable, mask, max_target_len, 
           encoder, decoder, embedding, encoder_optimizer, decoder_optimizer, 
-          batch_size, clip, teacher_forcing_ratio, max_length=MAX_LENGTH):
+          batch_size, clip, teacher_forcing_ratio, max_length=config.MAX_LENGTH):
   # Zero gradients
   encoder_optimizer.zero_grad()
   decoder_optimizer.zero_grad()
@@ -250,7 +243,7 @@ def train(input_variable, lengths, target_variable, mask, max_target_len,
   encoder_outputs, encoder_hidden = encoder(input_variable, lengths)
   
   # Create initial decoder input
-  decoder_input = torch.LongTensor([[SOS_token for _ in range(batch_size)]])
+  decoder_input = torch.LongTensor([[config.SOS_TOKEN for _ in range(batch_size)]])
   decoder_input = decoder_input.to(device)
   
   # Set initial decoder hidden state to the encoder's final hidden state
@@ -356,7 +349,7 @@ def trainIters(model_name, voc, pairs, encoder, decoder, encoder_optimizer, deco
             }, os.path.join(directory, '{}_{}.tar'.format(iteration, 'checkpoint')))
 
   
-def evaluate(encoder, decoder, searcher, voc, sentence, max_length=MAX_LENGTH):
+def evaluate(encoder, decoder, searcher, voc, sentence, max_length=config.MAX_LENGTH):
   ### Format input sentence as a batch
   # words -> indexes
   indexes_batch = [indexesFromSentence(voc, sentence)]
