@@ -16,28 +16,41 @@ pip install -r requirements.txt
 source server_env
 ```
 
-### Chat CLI
+## Train
+
+The model can restore the previously trained weights and continue training up on that. 
+
+```bash
+cd src
+python3 chatbot.py --mode train
+```
+
+## Chat
 
 Start the command line interaction with the chat bot.
-```
-python src/chatbot.py --mode chat
-```
 
-### Train
-
-The model will restore the previously trained weights and continue training up on that. To start training from scratch, please delete all the checkpoints in the checkpoints folder.
-
-```
-python src/chatbot.py --mode train
+```bash
+cd src
+python3 chatbot.py --mode chat
 ```
 
-### Tune parameters
+## Config
 
-The following model parameters in the `config.py` file can be tuned:<br>
-* NUM_LAYERS: the number of GRU/LSTM layers
-* USE_LSTM: use GRU or LSTM cell
-* EMBEDDING_SIZE: the length of the embedding vector for each symbol
-* ATTENTION_HEADS: the number of hidden states that read from the attention state
-* BATCH_SIZE: the size of training data per iteration
-* LR: learning rate of the model
+The model parameters can be tuned in `src/config.py`
 
+Parameters | Description
+-----|------
+MAX_LENGTH | maximum sentence length to consider
+MIN_COUNT | minimum word count threshold for trimming
+LOAD_CHECKPOINT | whether to load the checkpoints
+ATTN_MODEL | type of the attention model: dot/general/concat
+HIDDEN_SIZE | number of hidden units in encoder and decoder
+ENCODER_N_LAYERS | number of layers in bi-GRU encoder
+DECODER_N_LAYERS | number of layers in GRU decoder
+ENCODER_DROPOUT_RATE | dropout rate in bi-GRU encoder
+DECODER_DROPOUT_RATE | dropout rate in GRU decoder
+N_ITER | training iterations
+CLIP | gradient norm clip
+TEACHER_FORCING_RATIO | the ratio that decoder learns from ground truth instead of last output
+LR | encoder learning rate
+DECODER_LR | decoder learning rate: LR*DECODER_LR
