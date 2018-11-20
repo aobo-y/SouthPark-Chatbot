@@ -52,14 +52,20 @@ class EncoderRNN(nn.Module):
     
   def forward(self, input_seq, input_length, hidden=None):
     # Convert word indexes to embeddings
+	# shape = (max_length, batch_size, hidden_size)
     embedded = self.embedding(input_seq)
     # Pack padded batch of sequences for RNN module
+	# shape = (max_length, batch_size, hidden_size)
     packed = torch.nn.utils.rnn.pack_padded_sequence(embedded, input_length)
     # Forward pass through GRU
+	# outputs shape = (max_length, batch_size, hidden_size*num_directions)
+	# hidden shape = (n_layers*num_directions, batch_size, hidden_size)
     outputs, hidden = self.gru(packed, hidden)
     # Unpack padding 
+	# shape = (max_length, batch_size, hidden_size*num_directions)
     outputs, _ = torch.nn.utils.rnn.pad_packed_sequence(outputs)
     # Sum bidirectional GRU outputs
+	# shape = (max_length, batch_size, hidden_size)
     outputs = outputs[:, :, :self.hidden_size]+outputs[:, :, self.hidden_size:]
     # Return output and final hidden state
     return outputs, hidden
@@ -85,14 +91,19 @@ class Attn(torch.nn.Module):
       self.v = torch.nn.Parameter(torch.FloatTensor(hidden_size))
       
   def dot_score(self, hidden, encoder_output):
+	# shape = (max_length, batch_size)
     return torch.sum(hidden*encoder_output, dim=2)
   
   def general_score(self, hidden, encoder_output):
+	# shape = (max_length, batch_size, hidden_size)
     energy = self.attn(encoder_output)
+	# shape = (max_length, batch_size)
     return torch.sum(hidden*energy, dim=2)
   
   def concat_score(self, hidden, encoder_output):
+	# shape = (max_length, batch_size, hidden_size)
     energy = self.attn(torch.cat((hidden.expand(encoder_output.size(0), -1, -1), encoder_output), 2)).tanh()
+	# shape = (max_length, batch_size)
     return torch.sum(self.v*energy, dim=2)
   
   def forward(self, hidden, encoder_outputs):
@@ -105,9 +116,11 @@ class Attn(torch.nn.Module):
       attn_energies = self.dot_score(hidden, encoder_outputs)
     
     # Transpose max_length and batch_size dimensions
+	# shape = (batch_size, max_length)
     attn_energies = attn_energies.t()
     
     # Return the softmax normalized probability scores (with added dimension)
+	# shape = (batch_size, 1, max_length)
     return F.softmax(attn_energies, dim=1).unsqueeze(1)
   
   
@@ -148,20 +161,30 @@ class LuongAttnDecoderRNN(nn.Module):
     # Note: we run this one step(word) at a time
     
     # Get embedding of current input word
+	# shape = (1, batch_size, hidden_size)
     embedded = self.embedding(input_step)
     embedded = self.embedding_dropout(embedded)
     # Forward through GRU
+	# rnn_output shape = (1, batch_size, hidden_size)
+	# hidden shape = (n_layers*num_directions, batch_size, hidden_size)
     rnn_output, hidden = self.gru(embedded, last_hidden)
     # Calculate attention weights from the current GRU output
+	# attn_weights shape = (batch_size, 1, max_length)
     attn_weights = self.attn(rnn_output, encoder_outputs)
     # Multiply attention weights to encoder outputs to get new "weighted sum" context vector
+	# shape = (batch_size, hidden_size, 1)
     context = attn_weights.bmm(encoder_outputs.transpose(0, 1))
     # Concatenate weighted context vector and GRU output using Luong eq. 5
+	# shape = (batch_size, hidden_size)
     rnn_output = rnn_output.squeeze(0)
+	# shape = (batch_size, hidden_size)
     context = context.squeeze(1)
+	# shape = (batch_size, hidden_size*2)
     concat_input = torch.cat((rnn_output, context), 1)
+	# shape = (batch_size, hidden_size)
     concat_output = torch.tanh(self.concat(concat_input))
     # Predict next word using Luong eq. 6
+	# shape = (batch_size, voc_dict.length)
     output = self.out(concat_output)
     output = F.softmax(output, dim=1)
     return output, hidden
