@@ -12,7 +12,7 @@ import heapq
 import re
 
 with open('south_park.pickle', 'rb') as f:
-  # DATA = {'scenario', 'character', 'line'}
+  # DATA = [{'scenario', 'character', 'line'}]
   DATA = pickle.load(f)
 
 class char_freq:
@@ -30,7 +30,7 @@ def preprocess():
     d['line'] = re.sub(r'\(.*?\)', '', d['line'])
   
 
-def show_topN_talker(N = 10):
+def get_topN_talker(N = 10):
   chars_record = {}
   for d in DATA:
     chars_record[d['character']] = chars_record.get(d['character'], 0) + 1
@@ -47,10 +47,9 @@ def merge_scenario():
   scenario_set = {}
   for d in DATA:
     if scenario_set.get(d['scenario']) == None:
-      scenario_set[d['scenario']] = [(d['line'], d['character'])]
+      scenario_set[d['scenario']] = [(d['line'], d['character'])] # (line, character)
     else:
-      scenario_set[d['scenario']].append((d['line'], d['character']))
-      # print((d['line'], d['character']))
+      scenario_set[d['scenario']].append((d['line'], d['character'])) # (line, character)
   return scenario_set
 
 
@@ -113,7 +112,7 @@ def gen_general_train_file(talkers, scenario_set):
 
 if __name__ == "__main__":
   preprocess()
-  talkers = show_topN_talker()
+  talkers = get_topN_talker()
   scenario_set = merge_scenario()
   gen_fine_tune_file(talkers, scenario_set)
   gen_general_train_file(talkers, scenario_set)
