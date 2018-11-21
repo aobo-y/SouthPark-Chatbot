@@ -1,8 +1,10 @@
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import random
+"""
+Train seq2seq
+"""
+
 import os
+import random
+import torch
 import config
 
 from data_util import batch2TrainData
@@ -21,8 +23,8 @@ def maskNLLLoss(inp, target, mask):
 
 
 def train(input_variable, lengths, target_variable, mask, max_target_len,
-        encoder, decoder, embedding, encoder_optimizer, decoder_optimizer,
-        batch_size, clip, teacher_forcing_ratio, max_length=config.MAX_LENGTH):
+          encoder, decoder, embedding, encoder_optimizer, decoder_optimizer,
+          batch_size, clip, teacher_forcing_ratio, max_length = config.MAX_LENGTH):
     # Zero gradients
     encoder_optimizer.zero_grad()
     decoder_optimizer.zero_grad()
@@ -90,8 +92,8 @@ def train(input_variable, lengths, target_variable, mask, max_target_len,
 
 
 def trainIters(model_name, voc, pairs, encoder, decoder, encoder_optimizer, decoder_optimizer,
-                             embedding, encoder_n_layers, decoder_n_layers, hidden_size, save_dir, n_iteration, batch_size,
-                             print_every, save_every, clip, teacher_forcing_ratio, corpus_name, loadFilename):
+               embedding, encoder_n_layers, decoder_n_layers, hidden_size, save_dir, n_iteration,
+               batch_size, print_every, save_every, clip, teacher_forcing_ratio, corpus_name, loadFilename):
     """
     When we save our model, we save a tarball containing the encoder and decoder state_dicts (parameters),
     the optimizers’ state_dicts, the loss, the iteration, etc.
@@ -101,7 +103,7 @@ def trainIters(model_name, voc, pairs, encoder, decoder, encoder_optimizer, deco
 
     # Load batches for each iteration
     training_batches = [batch2TrainData(voc, [random.choice(pairs) for _ in range(batch_size)])
-                                            for _ in range(n_iteration)]
+                        for _ in range(n_iteration)]
 
     # Initializations
     print('Initializing...')
@@ -121,8 +123,8 @@ def trainIters(model_name, voc, pairs, encoder, decoder, encoder_optimizer, deco
 
         # run a training iteration with batch
         loss = train(input_variable, lengths, target_variable, mask, max_target_len,
-                                 encoder, decoder, embedding, encoder_optimizer, decoder_optimizer, batch_size,
-                                 clip, teacher_forcing_ratio)
+                     encoder, decoder, embedding, encoder_optimizer, decoder_optimizer, batch_size,
+                     clip, teacher_forcing_ratio)
         print_loss += loss
 
         # Print progress
@@ -146,5 +148,3 @@ def trainIters(model_name, voc, pairs, encoder, decoder, encoder_optimizer, deco
                 'voc_dict': voc.__dict__,
                 'embedding': embedding.state_dict()
             }, os.path.join(directory, '{}_{}.tar'.format(iteration, 'checkpoint')))
-
-
