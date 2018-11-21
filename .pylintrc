@@ -1,3 +1,2 @@
 [TYPECHECK]
-ignored-modules=numpy,torch
-ignored-classes=numpy,torch
+generated-members=numpy.*,torch.*

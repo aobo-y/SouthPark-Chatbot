@@ -1,23 +1,24 @@
-# -*- coding: utf-8 -*-
-
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
+"""
+SouthPark Chatbot
+"""
 
 import torch
-import torch.nn as nn
-from torch import optim
 import os
 import argparse
+
+from torch import nn
+from torch import optim
+
 import config
 from data_util import loadPrepareData, trimRareWords
-from seq2seq import EncoderRNN, LuongAttnDecoderRNN, GreedySearchDecoder, trainIters, evaluateInput
-
+from search_decoder import GreedySearchDecoder
+from seq_encoder import EncoderRNN
+from seq_decoder import LuongAttnDecoderRNN
+from seq2seq import trainIters
+from evaluate import evaluateInput
 
 USE_CUDA = torch.cuda.is_available()
 device = torch.device("cuda" if USE_CUDA else "cpu")
-
 
 def load_data(corpus_name=config.CORPUS_NAME, corpus_file=config.CORPUS_NAME):
     corpus = os.path.join("data", corpus_name)
@@ -46,8 +47,8 @@ def build_model(voc, load_checkpoint=config.LOAD_CHECKPOINT):
         voc.__dict__ = checkpoint['voc_dict']
     else:
         loadFilename = None
-        
-    
+
+
     print('Building encoder and decoder ...')
     # Initialize word embeddings
     embedding = nn.Embedding(voc.num_words, config.HIDDEN_SIZE)
@@ -67,39 +68,39 @@ def build_model(voc, load_checkpoint=config.LOAD_CHECKPOINT):
       return encoder, decoder, loadFilename, encoder_optimizer_sd, decoder_optimizer_sd, embedding
     else:
       return encoder, decoder, loadFilename, None, None, embedding
-    
+
 
 
 def train(encoder, decoder, loadFilename, encoder_optimizer_sd, decoder_optimizer_sd, embedding):
     # Ensure dropout layers are in train mode
     encoder.train()
     decoder.train()
-    
+
     # Initialize optimizers
     print('Building optimizers ...')
     encoder_optimizer = optim.Adam(encoder.parameters(), lr=config.LR)
     decoder_optimizer = optim.Adam(decoder.parameters(), lr=config.LR * config.DECODER_LR)
-    
+
     if loadFilename:
         encoder_optimizer.load_state_dict(encoder_optimizer_sd)
         decoder_optimizer.load_state_dict(decoder_optimizer_sd)
-    
+
     # Run training iterations
     print("Starting Training!")
     trainIters(config.MODEL_NAME, voc, pairs, encoder, decoder, encoder_optimizer, decoder_optimizer,
-               embedding, config.ENCODER_N_LAYERS, config.DECODER_N_LAYERS, config.HIDDEN_SIZE, config.SAVE_DIR, 
-               config.N_ITER, config.BATCH_SIZE, config.PRINT_EVERY, config.SAVE_EVERY, config.CLIP, 
+               embedding, config.ENCODER_N_LAYERS, config.DECODER_N_LAYERS, config.HIDDEN_SIZE, config.SAVE_DIR,
+               config.N_ITER, config.BATCH_SIZE, config.PRINT_EVERY, config.SAVE_EVERY, config.CLIP,
                config.TEACHER_FORCING_RATIO, config.CORPUS_NAME, loadFilename)
 
-    
+
 def chat(encoder, decoder, voc):
     # Set dropout layers to eval mode
     encoder.eval()
     decoder.eval()
-    
+
     # Initialize search module
     searcher = GreedySearchDecoder(encoder, decoder)
-    
+
     # Begin chatting (uncomment and run the following line to begin)
     evaluateInput(encoder, decoder, searcher, voc)
 
@@ -108,11 +109,10 @@ if __name__=='__main__':
     parser.add_argument('--mode', choices={'train', 'chat'}, default='train', help="mode. if not specified, it's in the train mode")
     args = parser.parse_args()
     voc, pairs = load_data()
-    
+
     if args.mode == 'train':
       encoder, decoder, loadFilename, encoder_optimizer_sd, decoder_optimizer_sd, embedding = build_model(voc)
       train(encoder, decoder, loadFilename, encoder_optimizer_sd, decoder_optimizer_sd, embedding)
     elif args.mode == 'chat':
       encoder, decoder, loadFilename, encoder_optimizer_sd, decoder_optimizer_sd, embedding = build_model(voc, load_checkpoint=True)
       chat(encoder, decoder, voc)
-    
