@@ -10,8 +10,8 @@ SOS_TOKEN = 1
 EOS_TOKEN = 2
 
 # corpus information
-CORPUS_NAME = "cornell movie-dialogs corpus"
-CORPUS_FILE = "formatted_movie_lines.txt"
+CORPUS_NAME = "south_park"
+CORPUS_FILE = "fine_tune.txt"
 
 # Configure models
 SAVE_DIR = 'checkpoints'
@@ -21,7 +21,7 @@ CHECKPOINT_ITER = 100      # where to continue training
 ATTN_MODEL = 'dot'         # type of the attention model: dot/general/concat
 USE_EMBEDDING = False      # whether to use pretrained word embedding
 TRAIN_EMBEDDING = True     # whether to update the word embeddding during training
-USE_PERSONA = False         # whether to update the persona embedding during training
+USE_PERSONA = True         # whether to update the persona embedding during training
 HIDDEN_SIZE = 500          # number of hidden units in bi-GRU encoder
 PERSONA_SIZE = 100         # size of the persona embedding
 ENCODER_N_LAYERS = 2       # number of layers in bi-GRU encoder
