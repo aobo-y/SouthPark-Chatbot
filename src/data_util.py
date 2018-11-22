@@ -87,11 +87,11 @@ def readVocs(datafile, corpus_name):
 
 
 # Returns True iff both sentences in a pair 'p' are under the MAX_LENGTH threshold
-def filterPair(p):
+def filterPair(p, use_persona=config.USE_PERSONA):
     # Input sequences need to preserve the last word for EOS token
-    if len(p)==3:
+    if len(p)==3 and use_persona:
         return len(p[0].split(' ')) < config.MAX_LENGTH and len(p[1].split(' ')) < config.MAX_LENGTH and len(p[2]) > 1
-    elif len(p)==2:
+    elif len(p)==2 and use_persona is not True:
         return len(p[0].split(' ')) < config.MAX_LENGTH and len(p[1].split(' ')) < config.MAX_LENGTH
     else:
         return False
@@ -101,7 +101,7 @@ def filterPair(p):
 def filterPairs(pairs):
     outs=[]
     for pair in pairs:
-        if filterPair(pair):
+        if filterPair(pair, config.USE_PERSONA) :
             outs.append(pair)
     return outs
 
@@ -114,13 +114,12 @@ def loadPrepareData(corpus, corpus_name, datafile):
     pairs = filterPairs(pairs)
     print("Trimmed to {!s} sentence pairs".format(len(pairs)))
     print("Counting words...")
-    if len(pairs)==3:
-        for pair in pairs:
+    for pair in pairs:
+        if len(pair)==3 and config.USE_PERSONA:
             voc.addSentence(pair[0])
             voc.addSentence(pair[1])
             voc.addPeople(pair[2])
-    else:
-        for pair in pairs:
+        elif config.USE_PERSONA is not True:
             voc.addSentence(pair[0])
             voc.addSentence(pair[1])
     print("Counted words:", voc.num_words)
@@ -209,12 +208,11 @@ def batch2TrainData(voc, pair_batch):
     pair_batch.sort(key=lambda x: len(x[0].split(" ")), reverse=True)
     input_batch, output_batch, speaker_batch = [], [], []
     for pair in pair_batch:
-        print(pair)
-        if len(pair)==3:
+        if len(pair)==3 and config.USE_PERSONA:
             input_batch.append(pair[0])
             output_batch.append(pair[1])
             speaker_batch.append(pair[2])
-        else:
+        elif config.USE_PERSONA is not True:
             input_batch.append(pair[0])
             output_batch.append(pair[1])
             speaker_batch.append('NONE')
