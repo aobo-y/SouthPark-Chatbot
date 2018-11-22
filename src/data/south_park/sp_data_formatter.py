@@ -26,8 +26,12 @@ class char_freq:
 
 def preprocess():
   for d in DATA:
-    d['line'] = re.sub(r'\[.*?\]', '', d['line'])
-    d['line'] = re.sub(r'\(.*?\)', '', d['line'])
+    d['line'] = re.sub(r'\[.*?\]', '', d['line']) # trim scenario, e.g. '[drives by and honks] Ahh!'
+    d['line'] = re.sub(r'[\(\)]', '', d['line']) # trim parens, e.g. '(Don't worry, I'm alright. Argh!)'
+    d['line'] = re.sub(r'\n', ' ', d['line']) # merge newlines, e.g. '\nSpank it, ever so gently.\n\n'
+    d['line'] = re.sub(r'\s+', ' ', d['line']) # merge multi-spaces into one, e.g. 'Spank  it, ever so gently'
+    d['line'] = re.sub(r'^\s+', '', d['line']) # trim leading spaces, e.g. ' Spank it, ever so gently.'
+    d['line'] = re.sub(r'\s+$', '', d['line']) # trim trailing spaces, e.g. 'Spank it, ever so gently.  '
   
 
 def get_topN_talker(N = 10):
