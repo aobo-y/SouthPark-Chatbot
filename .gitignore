@@ -1,12 +1,14 @@
 # ignore the log file
 nohup.out
 
+.DS_Store
+
 *.pdf
 
 *.SUNet
 *.pyc
 .env/*
-src/data/**
+# src/data/**
 !src/data/README.md
 ! **/.gitkeep
 src/processed/output_convo.txt
