@@ -1,10 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import torch
 import re
 import unicodedata
@@ -20,6 +15,8 @@ class Voc:
         self.word2count = {}
         self.index2word = {config.PAD_TOKEN: "PAD", config.SOS_TOKEN: "SOS", config.EOS_TOKEN: "EOS"}
         self.num_words = 3  # Count SOS, EOS, PAD
+        self.num_people = 1
+        self.people2index = {'NONE':0}
 
     def addSentence(self, sentence):
         for word in sentence.split(' '):
@@ -33,6 +30,12 @@ class Voc:
             self.num_words += 1
         else:
             self.word2count[word] += 1
+    
+    def addPeople(self, word):
+        if word not in self.people2index:
+            self.people2index[word] = self.num_people
+            self.num_people += 1
+        
 
     # Remove words below a certain count threshold
     def trim(self, min_count):
@@ -86,12 +89,21 @@ def readVocs(datafile, corpus_name):
 # Returns True iff both sentences in a pair 'p' are under the MAX_LENGTH threshold
 def filterPair(p):
     # Input sequences need to preserve the last word for EOS token
-    return len(p[0].split(' ')) < config.MAX_LENGTH and len(p[1].split(' ')) < config.MAX_LENGTH
+    if len(p)==3:
+        return len(p[0].split(' ')) < config.MAX_LENGTH and len(p[1].split(' ')) < config.MAX_LENGTH and len(p[2]) > 1
+    elif len(p)==2:
+        return len(p[0].split(' ')) < config.MAX_LENGTH and len(p[1].split(' ')) < config.MAX_LENGTH
+    else:
+        return False
 
 
 # Filter pairs using filterPair condition
 def filterPairs(pairs):
-    return [pair for pair in pairs if filterPair(pair)]
+    outs=[]
+    for pair in pairs:
+        if filterPair(pair):
+            outs.append(pair)
+    return outs
 
 
 # Using the functions defined above, return a populated voc object and pairs list
@@ -102,10 +114,17 @@ def loadPrepareData(corpus, corpus_name, datafile):
     pairs = filterPairs(pairs)
     print("Trimmed to {!s} sentence pairs".format(len(pairs)))
     print("Counting words...")
-    for pair in pairs:
-        voc.addSentence(pair[0])
-        voc.addSentence(pair[1])
+    if len(pairs)==3:
+        for pair in pairs:
+            voc.addSentence(pair[0])
+            voc.addSentence(pair[1])
+            voc.addPeople(pair[2])
+    else:
+        for pair in pairs:
+            voc.addSentence(pair[0])
+            voc.addSentence(pair[1])
     print("Counted words:", voc.num_words)
+    print("Counted people:", voc.num_people)
     return voc, pairs
 
 
@@ -173,13 +192,33 @@ def outputVar(l, voc):
     padVar = torch.LongTensor(padList)
     return padVar, mask, max_target_len
 
+# Return speaker_ids tensor with shape=(max_length, 1, batch_size)
+def speakerToId(speaker_batch, voc):
+    speaker_ids = []
+    for speaker in speaker_batch:
+        speaker_id = voc.people2index[speaker]
+        speaker_ids.append([speaker_id]*config.MAX_LENGTH)
+    speaker_ids = torch.LongTensor(speaker_ids)
+    speaker_ids = speaker_ids.t()
+    speaker_ids = torch.unsqueeze(speaker_ids, 1)
+    return speaker_ids
+        
+    
 # Returns all items for a given batch of pairs
 def batch2TrainData(voc, pair_batch):
     pair_batch.sort(key=lambda x: len(x[0].split(" ")), reverse=True)
-    input_batch, output_batch = [], []
+    input_batch, output_batch, speaker_batch = [], [], []
     for pair in pair_batch:
-        input_batch.append(pair[0])
-        output_batch.append(pair[1])
+        print(pair)
+        if len(pair)==3:
+            input_batch.append(pair[0])
+            output_batch.append(pair[1])
+            speaker_batch.append(pair[2])
+        else:
+            input_batch.append(pair[0])
+            output_batch.append(pair[1])
+            speaker_batch.append('NONE')
     inp, lengths = inputVar(input_batch, voc)
     output, mask, max_target_len = outputVar(output_batch, voc)
-    return inp, lengths, output, mask, max_target_len
+    speaker = speakerToId(speaker_batch, voc)
+    return inp, lengths, output, mask, max_target_len, speaker

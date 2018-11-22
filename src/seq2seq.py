@@ -22,7 +22,7 @@ def maskNLLLoss(inp, target, mask):
     return loss, nTotal.mean()
 
 
-def train(input_variable, lengths, target_variable, mask, max_target_len,
+def train(input_variable, lengths, target_variable, mask, max_target_len, speaker_id,
           encoder, decoder, embedding, encoder_optimizer, decoder_optimizer,
           batch_size, clip, teacher_forcing_ratio, max_length = config.MAX_LENGTH):
     # Zero gradients
@@ -56,7 +56,7 @@ def train(input_variable, lengths, target_variable, mask, max_target_len,
     # Forward batch of sequences through decoder one time step at a time
     if use_teacher_forcing:
         for t in range(max_target_len):
-            decoder_output, decoder_hidden = decoder(decoder_input, decoder_hidden, encoder_outputs)
+            decoder_output, decoder_hidden = decoder(decoder_input, speaker_id[t], decoder_hidden, encoder_outputs)
             # Teacher forcing: next input is current target
             decoder_input = target_variable[t].view(1, -1)
             # Calculate and accumulate loss
@@ -66,7 +66,7 @@ def train(input_variable, lengths, target_variable, mask, max_target_len,
             n_totals += nTotal
     else:
         for t in range(max_target_len):
-            decoder_output, decoder_hidden = decoder(decoder_input, decoder_hidden, encoder_outputs)
+            decoder_output, decoder_hidden = decoder(decoder_input, speaker_id[t], decoder_hidden, encoder_outputs)
             # No teacher forcing: next input is decoder's own current output
             _, topi = decoder_output.topk(1)
             decoder_input = torch.LongTensor([[topi[i][0] for i in range(batch_size)]])
@@ -119,10 +119,10 @@ def trainIters(model_name, voc, pairs, encoder, decoder, encoder_optimizer, deco
     for iteration in range(start_iteration, n_iteration+1):
         training_batch = training_batches[iteration-1]
         # extract fields from batch
-        input_variable, lengths, target_variable, mask, max_target_len = training_batch
+        input_variable, lengths, target_variable, mask, max_target_len, speaker = training_batch
 
         # run a training iteration with batch
-        loss = train(input_variable, lengths, target_variable, mask, max_target_len,
+        loss = train(input_variable, lengths, target_variable, mask, max_target_len, speaker,
                      encoder, decoder, embedding, encoder_optimizer, decoder_optimizer, batch_size,
                      clip, teacher_forcing_ratio)
         print_loss += loss
@@ -146,5 +146,5 @@ def trainIters(model_name, voc, pairs, encoder, decoder, encoder_optimizer, deco
                 'de_opt': decoder_optimizer.state_dict(),
                 'loss': loss,
                 'voc_dict': voc.__dict__,
-                'embedding': embedding.state_dict()
+                'embedding': encoder.embedding.state_dict()
             }, os.path.join(directory, '{}_{}.tar'.format(iteration, 'checkpoint')))

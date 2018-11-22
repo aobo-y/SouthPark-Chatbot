@@ -27,7 +27,7 @@ class EncoderRNN(nn.Module):
         super(EncoderRNN, self).__init__()
         self.n_layers = n_layers
         self.hidden_size = hidden_size
-        self.embedding = embedding
+        self.embedding = nn.Embedding(embedding[0], embedding[1])
 
         # Initialize GRU:
         # a) the input_size and hidden_size params are both set to 'hidden_size'

@@ -6,14 +6,12 @@ import torch
 import os
 import argparse
 
-from torch import nn
 from torch import optim
-
 import config
 from data_util import loadPrepareData, trimRareWords
 from search_decoder import GreedySearchDecoder
 from seq_encoder import EncoderRNN
-from seq_decoder import LuongAttnDecoderRNN
+from seq_decoder_persona import DecoderRNN
 from seq2seq import trainIters
 from evaluate import evaluateInput
 
@@ -51,12 +49,15 @@ def build_model(voc, load_checkpoint=config.LOAD_CHECKPOINT):
 
     print('Building encoder and decoder ...')
     # Initialize word embeddings
-    embedding = nn.Embedding(voc.num_words, config.HIDDEN_SIZE)
+    embedding = (voc.num_words, config.HIDDEN_SIZE)
+    personas = (voc.num_people, config.PERSONA_SIZE)
     if loadFilename:
         embedding.load_state_dict(embedding_sd)
     # Initialize encoder & decoder models
     encoder = EncoderRNN(config.HIDDEN_SIZE, embedding, config.ENCODER_N_LAYERS, config.ENCODER_DROPOUT_RATE)
-    decoder = LuongAttnDecoderRNN(config.ATTN_MODEL, embedding, config.HIDDEN_SIZE, voc.num_words, config.DECODER_N_LAYERS, config.DECODER_DROPOUT_RATE)
+    decoder = DecoderRNN(config.ATTN_MODEL, embedding, personas, config.HIDDEN_SIZE, config.DECODER_N_LAYERS, 
+                         config.DECODER_DROPOUT_RATE, use_embedding=config.USE_EMBEDDING, 
+                         train_embedding=config.TRAIN_EMBEDDING, use_persona=config.USE_PERSONA)
     if loadFilename:
         encoder.load_state_dict(encoder_sd)
         decoder.load_state_dict(decoder_sd)
@@ -109,10 +110,11 @@ if __name__=='__main__':
     parser.add_argument('--mode', choices={'train', 'chat'}, default='train', help="mode. if not specified, it's in the train mode")
     args = parser.parse_args()
     voc, pairs = load_data()
-
+    print('Speakers:', voc.people2index)
+    
     if args.mode == 'train':
-      encoder, decoder, loadFilename, encoder_optimizer_sd, decoder_optimizer_sd, embedding = build_model(voc)
-      train(encoder, decoder, loadFilename, encoder_optimizer_sd, decoder_optimizer_sd, embedding)
+        encoder, decoder, loadFilename, encoder_optimizer_sd, decoder_optimizer_sd, embedding = build_model(voc)
+        train(encoder, decoder, loadFilename, encoder_optimizer_sd, decoder_optimizer_sd, embedding)
     elif args.mode == 'chat':
-      encoder, decoder, loadFilename, encoder_optimizer_sd, decoder_optimizer_sd, embedding = build_model(voc, load_checkpoint=True)
-      chat(encoder, decoder, voc)
+        encoder, decoder, loadFilename, encoder_optimizer_sd, decoder_optimizer_sd, embedding = build_model(voc, load_checkpoint=True)
+        chat(encoder, decoder, voc)
