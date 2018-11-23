@@ -13,7 +13,7 @@ class DecoderRNN(nn.Module):
 
     Inputs:
         input_step: one time step (one word) of input sequence batch; shape=(1, batch_size)
-        speakers: shape = (1, batch_size)
+        speakers: speaker id, shape = (1, batch_size)
         last_hidden: final hidden layer of GRU; shape=(n_layers x num_directions, batch_size, hidden_size)
         encoder_outputs: encoder model’s output; shape=(max_length, batch_size, hidden_size)
 
@@ -23,30 +23,22 @@ class DecoderRNN(nn.Module):
         hidden: final hidden state of GRU; shape=(n_layers x num_directions, batch_size, hidden_size)
     """
 
-    def __init__(self, attn_model, embedding, personas, hidden_size, n_layers=1, dropout=0.5,
-                 use_embedding=False, train_embedding=True, use_persona=True):
+    def __init__(self, attn_model, embedding, personas, hidden_size, persona_size, output_size,
+                 n_layers=1, dropout=0.5, use_persona=True):
         super(DecoderRNN, self).__init__()
         self.attn_model = attn_model
         self.hidden_size = hidden_size
+        self.persona_size = persona_size
+        self.input_size = hidden_size+persona_size
+        self.output_size = output_size
         self.n_layers = n_layers
         self.dropout = dropout
 
         # Define layers
-        if use_embedding:
-            self.embedding = nn.Embedding(embedding.shape[0], embedding.shape[1])
-            self.embedding.weight = nn.Parameter(embedding)
-            self.input_size = embedding.shape[1]+personas[1]    # Size of embedding vector
-            self.output_size = embedding.shape[0]               # Number of words in vocabulary
-            self.personas = nn.Embedding(personas.shape[0], personas.shape[1])
-        else:
-            self.embedding = nn.Embedding(embedding[0], embedding[1])
-            self.input_size = embedding[1]+personas[1]    # Size of embedding vector
-            self.output_size = embedding[0]               # Number of words in vocabulary
-            self.personas = nn.Embedding(personas[0], personas[1])
-            
-        self.personas.weight.requires_grad = use_persona
-        self.embedding.weight.requires_grad = train_embedding
+        self.embedding = embedding
         self.embedding_dropout = nn.Dropout(dropout)
+        self.personas = personas
+        self.personas.weight.requires_grad = use_persona
         self.gru = nn.GRU(self.input_size, hidden_size, n_layers,
                           dropout=(0 if n_layers == 1 else dropout))
         self.concat = nn.Linear(hidden_size*2, hidden_size)
