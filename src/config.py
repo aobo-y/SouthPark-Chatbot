@@ -8,6 +8,7 @@ MIN_COUNT = 1    # Minimum word count threshold for trimming
 PAD_TOKEN = 0
 SOS_TOKEN = 1
 EOS_TOKEN = 2
+UNK_TOKEN = 3
 
 # corpus information
 CORPUS_NAME = "south_park"

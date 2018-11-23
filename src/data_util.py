@@ -13,8 +13,9 @@ class Voc:
         self.trimmed = False
         self.word2index = {}
         self.word2count = {}
-        self.index2word = {config.PAD_TOKEN: "PAD", config.SOS_TOKEN: "SOS", config.EOS_TOKEN: "EOS"}
-        self.num_words = 3  # Count SOS, EOS, PAD
+        self.index2word = {config.PAD_TOKEN: "PAD", config.SOS_TOKEN: "SOS", 
+                           config.EOS_TOKEN: "EOS", config.UNK_TOKEN: "UNK"}
+        self.num_words = 4  # Count SOS, EOS, PAD, UNK
         self.num_people = 1
         self.people2index = {'NONE':0}
 
@@ -156,7 +157,13 @@ def trimRareWords(voc, pairs, min_count=config.MIN_COUNT):
     return keep_pairs
 
 def indexesFromSentence(voc, sentence):
-    return [voc.word2index[word] for word in sentence.split(' ')] + [config.EOS_TOKEN]
+    words = []
+    for word in sentence.split(' '):
+        if word not in voc.word2index:
+            words.append(voc.word2index[config.UNK_TOKEN])
+        else:
+            words.append(voc.word2index[word])
+    return words + [config.EOS_TOKEN]
 
 
 def zeroPadding(l, fillvalue=config.PAD_TOKEN):
