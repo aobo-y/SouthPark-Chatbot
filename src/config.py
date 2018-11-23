@@ -17,7 +17,7 @@ CORPUS_FILE = "formatted_movie_lines.txt"
 SAVE_DIR = 'checkpoints'
 MODEL_NAME = 'dwy' 
 LOAD_CHECKPOINT = False   
-CHECKPOINT_ITER = 4000     # where to continue training
+CHECKPOINT_ITER = 200     # where to continue training
 ATTN_MODEL = 'dot'         # type of the attention model: dot/general/concat
 HIDDEN_SIZE = 500          # number of hidden units in bi-GRU encoder
 ENCODER_N_LAYERS = 2       # number of layers in bi-GRU encoder
@@ -27,7 +27,7 @@ DECODER_DROPOUT_RATE = 0.1 # dropout rate in GRU decoder
 BATCH_SIZE = 64            # size of the mini batch in training state
 
 # Configure training/optimization
-N_ITER = 100               # training iterations
+N_ITER = 10000               # training iterations
 CLIP = 50.0                # gradient norm clip
 TEACHER_FORCING_RATIO = 1.0
 LR = 0.0001                # encoder learning ratio

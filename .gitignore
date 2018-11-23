@@ -12,6 +12,7 @@ nohup.out
 !src/data/README.md
 ! **/.gitkeep
 src/processed/output_convo.txt
+src/checkpoints/**
 
 examples/data
 examples/graphs/*

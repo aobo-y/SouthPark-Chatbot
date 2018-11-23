@@ -11,7 +11,7 @@ from torch import optim
 
 import config
 from data_util import loadPrepareData, trimRareWords
-from search_decoder import GreedySearchDecoder
+from search_decoder import GreedySearchDecoder, BeamSearchDecoder
 from seq_encoder import EncoderRNN
 from seq_decoder import LuongAttnDecoderRNN
 from seq2seq import trainIters
@@ -99,7 +99,8 @@ def chat(encoder, decoder, voc):
     decoder.eval()
 
     # Initialize search module
-    searcher = GreedySearchDecoder(encoder, decoder)
+    searcher = BeamSearchDecoder(encoder, decoder)
+    # searcher = GreedySearchDecoder(encoder, decoder)
 
     # Begin chatting (uncomment and run the following line to begin)
     evaluateInput(encoder, decoder, searcher, voc)
