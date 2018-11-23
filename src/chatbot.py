@@ -42,6 +42,7 @@ def build_model(voc, load_checkpoint=config.LOAD_CHECKPOINT):
         encoder_optimizer_sd = checkpoint['en_opt']
         decoder_optimizer_sd = checkpoint['de_opt']
         embedding_sd = checkpoint['embedding']
+        persona_sd = checkpoint['persona']
         voc.__dict__ = checkpoint['voc_dict']
     else:
         loadFilename = None
@@ -49,15 +50,15 @@ def build_model(voc, load_checkpoint=config.LOAD_CHECKPOINT):
 
     print('Building encoder and decoder ...')
     # Initialize word embeddings
-    embedding = (voc.num_words, config.HIDDEN_SIZE)
-    personas = (voc.num_people, config.PERSONA_SIZE)
+    embedding = torch.nn.Embedding(voc.num_words, config.HIDDEN_SIZE)
+    personas = torch.nn.Embedding(voc.num_people, config.PERSONA_SIZE)
     if loadFilename:
         embedding.load_state_dict(embedding_sd)
+        personas.load_state_dict(persona_sd)
     # Initialize encoder & decoder models
     encoder = EncoderRNN(config.HIDDEN_SIZE, embedding, config.ENCODER_N_LAYERS, config.ENCODER_DROPOUT_RATE)
-    decoder = DecoderRNN(config.ATTN_MODEL, embedding, personas, config.HIDDEN_SIZE, config.DECODER_N_LAYERS, 
-                         config.DECODER_DROPOUT_RATE, use_embedding=config.USE_EMBEDDING, 
-                         train_embedding=config.TRAIN_EMBEDDING, use_persona=config.USE_PERSONA)
+    decoder = DecoderRNN(config.ATTN_MODEL, embedding, personas, config.HIDDEN_SIZE, config.PERSONA_SIZE, voc.num_words,
+                         config.DECODER_N_LAYERS, config.DECODER_DROPOUT_RATE, use_persona=config.USE_PERSONA)
     if loadFilename:
         encoder.load_state_dict(encoder_sd)
         decoder.load_state_dict(decoder_sd)
@@ -66,13 +67,13 @@ def build_model(voc, load_checkpoint=config.LOAD_CHECKPOINT):
     decoder = decoder.to(device)
     print('Models built and ready to go!')
     if load_checkpoint:
-      return encoder, decoder, loadFilename, encoder_optimizer_sd, decoder_optimizer_sd, embedding
+      return encoder, decoder, loadFilename, encoder_optimizer_sd, decoder_optimizer_sd, embedding, personas
     else:
-      return encoder, decoder, loadFilename, None, None, embedding
+      return encoder, decoder, loadFilename, None, None, embedding, personas
 
 
 
-def train(encoder, decoder, loadFilename, encoder_optimizer_sd, decoder_optimizer_sd, embedding):
+def train(encoder, decoder, loadFilename, encoder_optimizer_sd, decoder_optimizer_sd, embedding, personas):
     # Ensure dropout layers are in train mode
     encoder.train()
     decoder.train()
@@ -89,18 +90,19 @@ def train(encoder, decoder, loadFilename, encoder_optimizer_sd, decoder_optimize
     # Run training iterations
     print("Starting Training!")
     trainIters(config.MODEL_NAME, voc, pairs, encoder, decoder, encoder_optimizer, decoder_optimizer,
-               embedding, config.ENCODER_N_LAYERS, config.DECODER_N_LAYERS, config.HIDDEN_SIZE, config.SAVE_DIR,
-               config.N_ITER, config.BATCH_SIZE, config.PRINT_EVERY, config.SAVE_EVERY, config.CLIP,
-               config.TEACHER_FORCING_RATIO, config.CORPUS_NAME, loadFilename)
+               embedding, personas, config.ENCODER_N_LAYERS, config.DECODER_N_LAYERS, config.HIDDEN_SIZE, 
+               config.SAVE_DIR, config.N_ITER, config.BATCH_SIZE, config.PRINT_EVERY, config.SAVE_EVERY, 
+               config.CLIP, config.TEACHER_FORCING_RATIO, config.CORPUS_NAME, loadFilename)
 
 
-def chat(encoder, decoder, voc):
+def chat(encoder, decoder, voc, speaker_name):
     # Set dropout layers to eval mode
     encoder.eval()
     decoder.eval()
 
     # Initialize search module
-    searcher = GreedySearchDecoder(encoder, decoder)
+    speaker_id = voc.people2index[speaker_name]
+    searcher = GreedySearchDecoder(encoder, decoder, speaker_id)
 
     # Begin chatting (uncomment and run the following line to begin)
     evaluateInput(encoder, decoder, searcher, voc)
@@ -113,8 +115,8 @@ if __name__=='__main__':
     print('Speakers:', voc.people2index)
     
     if args.mode == 'train':
-        encoder, decoder, loadFilename, encoder_optimizer_sd, decoder_optimizer_sd, embedding = build_model(voc)
-        train(encoder, decoder, loadFilename, encoder_optimizer_sd, decoder_optimizer_sd, embedding)
+        encoder, decoder, loadFilename, encoder_optimizer_sd, decoder_optimizer_sd, embedding, personas = build_model(voc)
+        train(encoder, decoder, loadFilename, encoder_optimizer_sd, decoder_optimizer_sd, embedding, personas)
     elif args.mode == 'chat':
-        encoder, decoder, loadFilename, encoder_optimizer_sd, decoder_optimizer_sd, embedding = build_model(voc, load_checkpoint=True)
-        chat(encoder, decoder, voc)
+        encoder, decoder, loadFilename, encoder_optimizer_sd, decoder_optimizer_sd, embedding, personas = build_model(voc, load_checkpoint=True)
+        chat(encoder, decoder, voc, 'cartman')

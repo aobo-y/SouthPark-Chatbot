@@ -54,7 +54,7 @@ class Voc:
         # Reinitialize dictionaries
         self.word2index = {}
         self.word2count = {}
-        self.index2word = {config.PAD_TOKEN: "PAD", config.SOS_TOKEN: "SOS", config.EOS_TOKEN: "EOS"}
+        self.index2word = {config.PAD_TOKEN: "PAD", config.SOS_TOKEN: "SOS", config.EOS_TOKEN: "EOS", config.UNK_TOKEN: "UNK"}
         self.num_words = 3 # Count default tokens
         for word in keep_words:
             self.addWord(word)
@@ -159,8 +159,8 @@ def trimRareWords(voc, pairs, min_count=config.MIN_COUNT):
 def indexesFromSentence(voc, sentence):
     words = []
     for word in sentence.split(' '):
-        if word not in voc.word2index:
-            words.append(voc.word2index[config.UNK_TOKEN])
+        if word not in voc.word2index.keys():
+            words.append(voc.word2index['UNK'])
         else:
             words.append(voc.word2index[word])
     return words + [config.EOS_TOKEN]

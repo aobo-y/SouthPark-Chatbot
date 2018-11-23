@@ -20,7 +20,6 @@ MODEL_NAME = 'dwy_persona_based'
 LOAD_CHECKPOINT = False   
 CHECKPOINT_ITER = 100      # where to continue training
 ATTN_MODEL = 'dot'         # type of the attention model: dot/general/concat
-USE_EMBEDDING = False      # whether to use pretrained word embedding
 TRAIN_EMBEDDING = True     # whether to update the word embeddding during training
 USE_PERSONA = True         # whether to update the persona embedding during training
 HIDDEN_SIZE = 500          # number of hidden units in bi-GRU encoder
