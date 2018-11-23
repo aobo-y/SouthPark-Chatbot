@@ -30,18 +30,6 @@ def evaluate(encoder, decoder, searcher, voc, sentence, max_length=config.MAX_LE
 def evaluateInput(encoder, decoder, searcher, voc):
     input_sentence = ''
     while(1):
-        # get input sentence
-        input_sentence = input('> ')
-        # check if it is quit case
-        if input_sentence == 'q' or input_sentence =='quit':
-            break
-        input_sentence = normalizeString(input_sentence)
-        # evaluate sentence
-        output_words = evaluate(encoder, decoder, searcher, voc, input_sentence)
-        # format and print reponse sentence
-        output_words[:] = [x for x in output_words if not (x=='EOS' or x=='PAD')]
-        print('Bot:', ' '.join(output_words))
-        '''
         try:
             # get input sentence
             input_sentence = input('> ')
@@ -56,7 +44,6 @@ def evaluateInput(encoder, decoder, searcher, voc):
             print('Bot:', ' '.join(output_words))
         except KeyError:
             print('Error: Encountered unknown word.')
-        '''
 
 
 # Normalize input sentence and call evaluate()

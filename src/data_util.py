@@ -160,7 +160,7 @@ def indexesFromSentence(voc, sentence):
     words = []
     for word in sentence.split(' '):
         if word not in voc.word2index.keys():
-            words.append(voc.word2index['UNK'])
+            words.append(config.UNK_TOKEN)
         else:
             words.append(voc.word2index[word])
     return words + [config.EOS_TOKEN]
