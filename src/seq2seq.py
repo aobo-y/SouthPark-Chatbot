@@ -34,6 +34,7 @@ def train(input_variable, lengths, target_variable, mask, max_target_len, speake
     lengths = lengths.to(device)
     target_variable = target_variable.to(device)
     mask = mask.to(device)
+    speaker_id = mask.to(device)
 
     # Initialize variables
     loss = 0.
