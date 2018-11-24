@@ -45,7 +45,8 @@ DECODER_N_LAYERS = 2         # number of layers in GRU decoder
 ENCODER_DROPOUT_RATE = 0.1   # dropout rate in bi-GRU encoder
 DECODER_DROPOUT_RATE = 0.1   # dropout rate in GRU decoder
 TEACHER_FORCING_RATIO = 1.0  # ratio for training decoder on ground truth or last output of decoder
-
+BEAM_SEARCH_ON = False     # use Beam Search or Greedy Search
+BEAM_WIDTH = 10
 
 # Configure training/optimization
 BATCH_SIZE = 64            # size of the mini batch in training state
@@ -54,4 +55,3 @@ LR = 0.0001                # encoder learning ratio
 DECODER_LR = 5.0           # decoder learning ratio: LR*DECODER_LR
 PRINT_EVERY = 100          # print the loss every x iterations
 SAVE_EVERY = 1000          # save the checkpoint every x iterations
-

@@ -10,7 +10,7 @@ import numpy as np
 from torch import optim
 import config
 from data_util import loadPrepareData, trimRareWords, Voc
-from search_decoder import GreedySearchDecoder
+from search_decoder import GreedySearchDecoder, BeamSearchDecoder
 from seq_encoder import EncoderRNN
 from seq_decoder_persona import DecoderRNN
 from seq2seq import trainIters
@@ -109,7 +109,10 @@ def chat(encoder, decoder, voc, speaker_name):
 
     # Initialize search module
     speaker_id = voc.people2index[speaker_name]
-    searcher = GreedySearchDecoder(encoder, decoder, speaker_id)
+    if config.BEAM_SEARCH_ON:
+        searcher = BeamSearchDecoder(encoder, decoder, speaker_id)
+    else:
+        searcher = GreedySearchDecoder(encoder, decoder, speaker_id)
 
     # Begin chatting (uncomment and run the following line to begin)
     evaluateInput(encoder, decoder, searcher, voc)
