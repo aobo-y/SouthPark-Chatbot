@@ -99,8 +99,10 @@ def chat(encoder, decoder, voc):
     decoder.eval()
 
     # Initialize search module
-    searcher = BeamSearchDecoder(encoder, decoder)
-    # searcher = GreedySearchDecoder(encoder, decoder)
+    if config.BEAM_SEARCH_ON:
+        searcher = BeamSearchDecoder(encoder, decoder)
+    else:
+        searcher = GreedySearchDecoder(encoder, decoder)
 
     # Begin chatting (uncomment and run the following line to begin)
     evaluateInput(encoder, decoder, searcher, voc)

@@ -25,6 +25,7 @@ DECODER_N_LAYERS = 2       # number of layers in GRU decoder
 ENCODER_DROPOUT_RATE = 0.1 # dropout rate in bi-GRU encoder
 DECODER_DROPOUT_RATE = 0.1 # dropout rate in GRU decoder
 BATCH_SIZE = 64            # size of the mini batch in training state
+BEAM_SEARCH_ON = False
 
 # Configure training/optimization
 N_ITER = 10000               # training iterations
