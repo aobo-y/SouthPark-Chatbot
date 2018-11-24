@@ -12,6 +12,7 @@ UNK_TOKEN = 3
 
 # corpus information
 CORPUS_NAME = "south_park"
+CORPUS_NAME_PRETRAIN = "cornell movie-dialogs corpus"
 CORPUS_FILE = "fine_tune.txt"
 
 # Configure models

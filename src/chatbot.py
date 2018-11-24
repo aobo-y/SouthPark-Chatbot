@@ -30,7 +30,7 @@ def load_data(corpus_name=config.CORPUS_NAME, corpus_file=config.CORPUS_NAME):
 
 def build_model(voc, load_checkpoint=config.LOAD_CHECKPOINT):
     if load_checkpoint:
-        loadFilename = os.path.join(config.SAVE_DIR, config.MODEL_NAME, config.CORPUS_NAME,
+        loadFilename = os.path.join(config.SAVE_DIR, config.MODEL_NAME, config.CORPUS_NAME_PRETRAIN,
                                 '{}-{}_{}'.format(config.ENCODER_N_LAYERS, config.DECODER_N_LAYERS, config.HIDDEN_SIZE),
                                 '{}_checkpoint.tar'.format(config.CHECKPOINT_ITER))
         # If loading on same machine the model was trained on
