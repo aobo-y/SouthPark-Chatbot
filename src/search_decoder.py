@@ -25,10 +25,11 @@ class GreedySearchDecoder(nn.Module):
         all_scores: collections of words scores
     """
 
-    def __init__(self, encoder, decoder):
+    def __init__(self, encoder, decoder, speaker_id):
         super(GreedySearchDecoder, self).__init__()
         self.encoder = encoder
         self.decoder = decoder
+        self.speaker = speaker_id
 
     def forward(self, input_seq, input_length, max_length):
         # Forward input through encoder model
@@ -43,7 +44,11 @@ class GreedySearchDecoder(nn.Module):
         # Iteratively decode one word token at a time
         for _ in range(max_length):
             # Forward pass through decoder
-            decoder_output, decoder_hidden = self.decoder(decoder_input, decoder_hidden, encoder_outputs)
+            # Transform speaker_id from int into tensor with shape=(1, 1)
+            speaker_id = torch.LongTensor([self.speaker])
+            speaker_id = torch.unsqueeze(speaker_id, 1)
+            speaker_id = speaker_id.to(device)
+            decoder_output, decoder_hidden = self.decoder(decoder_input, speaker_id, decoder_hidden, encoder_outputs)
             # Obtain most likely word token and its softmax score
             decoder_scores, decoder_input = torch.max(decoder_output, dim=1)
             # Record token and score
