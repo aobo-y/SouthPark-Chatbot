@@ -180,7 +180,7 @@ class BeamSearchDecoder(nn.Module):
                     n = n.prevNode
                     all_tokens.append(n.wordid)
                     all_scores.append(n.logp)
-                all_tokens = all_tokens[::-1]
-                all_scores = all_scores[::-1]
+                all_tokens = all_tokens[::-1][1:]
+                all_scores = all_scores[::-1][1:]
 
         return all_tokens, all_scores
