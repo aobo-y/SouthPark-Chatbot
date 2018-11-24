@@ -73,10 +73,10 @@ def unicodeToAscii(s):
 
 # Read query/response pairs and return a voc object
 def readVocs(datafile, corpus_name):
-    print("Reading lines...")
+    print("Reading lines from %s..." % datafile)
     # Read the file and split into lines
-    lines = open(datafile, encoding='utf-8').\
-        read().strip().split('\n')
+    with open(datafile, encoding='utf-8') as f:
+        lines = f.read().strip().split('\n')
     # Split every line into pairs and normalize
     pairs = [[normalizeString(s) for s in l.split('\t')] for l in lines]
     voc = Voc(corpus_name)

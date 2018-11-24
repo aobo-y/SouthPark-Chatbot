@@ -92,7 +92,7 @@ line format for general train:
 Or
 - How are you?\tGood.\n
 """
-GENERAL_TRAIN_FORMAT = '%s' + SEPARATOR + '%s' + SEPARATOR + '\n'
+GENERAL_TRAIN_FORMAT = '%s' + SEPARATOR + '%s' + '\n'
 def gen_general_train_file(talkers, scenario_set):
   print("Generating data for general training...")
   buf = ""
