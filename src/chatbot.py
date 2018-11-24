@@ -101,10 +101,10 @@ def chat(encoder, decoder, voc, speaker_name):
     decoder.eval()
 
     # Initialize search module
+    speaker_id = voc.people2index[speaker_name]
     if config.BEAM_SEARCH_ON:
-        searcher = BeamSearchDecoder(encoder, decoder)
+        searcher = BeamSearchDecoder(encoder, decoder, speaker_id)
     else:
-        speaker_id = voc.people2index[speaker_name]
         searcher = GreedySearchDecoder(encoder, decoder, speaker_id)
 
     # Begin chatting (uncomment and run the following line to begin)

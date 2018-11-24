@@ -71,10 +71,11 @@ class BeamSearchDecoder(nn.Module):
         all_scores: collections of words scores
     """
     
-    def __init__(self, encoder, decoder):
+    def __init__(self, encoder, decoder, speaker_id):
         super(BeamSearchDecoder, self).__init__()
         self.encoder = encoder
         self.decoder = decoder
+        self.speaker = speaker_id
 
     class BeamSearchNode(object):
         def __init__(self, hiddenstate, previousNode, wordId, logProb, length):
@@ -140,8 +141,13 @@ class BeamSearchDecoder(nn.Module):
                     else:
                         continue
 
+                # Forward pass through decoder
+                # Transform speaker_id from int into tensor with shape=(1, 1)
+                speaker_id = torch.LongTensor([self.speaker])
+                speaker_id = torch.unsqueeze(speaker_id, 1)
+                speaker_id = speaker_id.to(device)
                 # decode for one step using decoder
-                decoder_output, decoder_hidden = self.decoder(decoder_input, decoder_hidden, encoder_outputs)
+                decoder_output, decoder_hidden = self.decoder(decoder_input, speaker_id, decoder_hidden, encoder_outputs)
                 # PUT HERE REAL BEAM SEARCH OF TOP
                 log_prob, indexes = torch.topk(decoder_output, beam_width)
                 nextnodes = []
