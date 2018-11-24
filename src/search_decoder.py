@@ -98,7 +98,7 @@ class BeamSearchDecoder(nn.Module):
             return self.logp / float(self.leng - 1 + 1e-6) + alpha * reward
 
     def forward(self, input_seq, input_length, max_length):
-        beam_width = 10
+        beam_width = config.BEAM_WIDTH
         topk = 1  # how many sentence do you want to generate
         
         # decoding goes sentence by sentence
