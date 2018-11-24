@@ -76,16 +76,10 @@ class BeamSearchDecoder(nn.Module):
         self.encoder = encoder
         self.decoder = decoder
         self.speaker = speaker_id
+        self.beam_width = config.BEAM_WIDTH
 
     class BeamSearchNode(object):
         def __init__(self, hiddenstate, previousNode, wordId, logProb, length):
-            '''
-            :param hiddenstate:
-            :param previousNode:
-            :param wordId:
-            :param logProb:
-            :param length:
-            '''
             self.h = hiddenstate
             self.prevNode = previousNode
             self.wordid = wordId
@@ -98,7 +92,6 @@ class BeamSearchDecoder(nn.Module):
             return self.logp / float(self.leng - 1 + 1e-6) + alpha * reward
 
     def forward(self, input_seq, input_length, max_length):
-        beam_width = config.BEAM_WIDTH
         topk = 1  # how many sentence do you want to generate
         
         # decoding goes sentence by sentence
@@ -149,10 +142,10 @@ class BeamSearchDecoder(nn.Module):
                 # decode for one step using decoder
                 decoder_output, decoder_hidden = self.decoder(decoder_input, speaker_id, decoder_hidden, encoder_outputs)
                 # PUT HERE REAL BEAM SEARCH OF TOP
-                log_prob, indexes = torch.topk(decoder_output, beam_width)
+                log_prob, indexes = torch.topk(decoder_output, self.beam_width)
                 nextnodes = []
 
-                for new_k in range(beam_width):
+                for new_k in range(self.beam_width):
                     decoded_t = indexes[0][new_k].view(1, -1)
                     log_p = log_prob[0][new_k].item()
 

@@ -34,7 +34,7 @@ SAVE_DIR = 'checkpoints'
 MODEL_NAME = 'dwy_persona_based'
 N_ITER = 4000                # training iterations 
 LOAD_CHECKPOINT = False      # whether to load checkpoint, if true, need to set CHECKPOINT_ITER
-CHECKPOINT_ITER = 4000       # where to continue training
+CHECKPOINT_ITER = 4000        # where to continue training
 ATTN_MODEL = 'dot'           # type of the attention model: dot/general/concat
 TRAIN_EMBEDDING = True       # whether to update the word embeddding during training
 USE_PERSONA = False          # whether to update the persona embedding during training
@@ -45,8 +45,8 @@ DECODER_N_LAYERS = 2         # number of layers in GRU decoder
 ENCODER_DROPOUT_RATE = 0.1   # dropout rate in bi-GRU encoder
 DECODER_DROPOUT_RATE = 0.1   # dropout rate in GRU decoder
 TEACHER_FORCING_RATIO = 1.0  # ratio for training decoder on ground truth or last output of decoder
-BEAM_SEARCH_ON = False     # use Beam Search or Greedy Search
-BEAM_WIDTH = 10
+BEAM_SEARCH_ON = False       # use Beam Search or Greedy Search
+BEAM_WIDTH = 10              # size of beam
 
 # Configure training/optimization
 BATCH_SIZE = 64            # size of the mini batch in training state
