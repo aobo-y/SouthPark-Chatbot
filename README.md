@@ -40,7 +40,7 @@ The model settings can be modified in `src/config.py`
 
 Parameters | Description
 -----|------
-DATA_MODE | choose which data set to train on: pretrain_on_cornell/pretrain_on_southpark/finetune_on_southpark
+DATA_MODE | choose which data set to train on: cornell/pretrain/finetune
 MAX_LENGTH | maximum sentence length to consider
 MIN_COUNT | minimum word count threshold for trimming
 N_ITER | training iterations

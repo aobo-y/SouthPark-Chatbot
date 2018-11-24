@@ -52,6 +52,6 @@ BATCH_SIZE = 64            # size of the mini batch in training state
 CLIP = 50.0                # gradient norm clip
 LR = 0.0001                # encoder learning ratio
 DECODER_LR = 5.0           # decoder learning ratio: LR*DECODER_LR
-PRINT_EVERY = 10          # print the loss every x iterations
-SAVE_EVERY = 100          # save the checkpoint every x iterations
+PRINT_EVERY = 100          # print the loss every x iterations
+SAVE_EVERY = 1000          # save the checkpoint every x iterations
 
