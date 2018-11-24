@@ -16,8 +16,10 @@ class Voc:
         self.index2word = {config.PAD_TOKEN: "PAD", config.SOS_TOKEN: "SOS", 
                            config.EOS_TOKEN: "EOS", config.UNK_TOKEN: "UNK"}
         self.num_words = 4  # Count SOS, EOS, PAD, UNK
-        self.num_people = 1
-        self.people2index = {'NONE':0}
+        self.num_people = 11
+        self.people2index = {'NONE': 0, 'kyle': 1, 'cartman': 2, 'stan': 3, 
+                             'chef': 4, 'kenny': 5, 'mr . garrison': 6, 
+                             'randy': 7, 'sharon': 8, 'gerald': 9, 'butters': 10}
 
     def addSentence(self, sentence):
         for word in sentence.split(' '):
@@ -30,13 +32,7 @@ class Voc:
             self.index2word[self.num_words] = word
             self.num_words += 1
         else:
-            self.word2count[word] += 1
-    
-    def addPeople(self, word):
-        if word not in self.people2index:
-            self.people2index[word] = self.num_people
-            self.num_people += 1
-        
+            self.word2count[word] += 1       
 
     # Remove words below a certain count threshold
     def trim(self, min_count):
@@ -116,13 +112,8 @@ def loadPrepareData(corpus, corpus_name, datafile):
     print("Trimmed to {!s} sentence pairs".format(len(pairs)))
     print("Counting words...")
     for pair in pairs:
-        if len(pair)==3 and config.USE_PERSONA:
-            voc.addSentence(pair[0])
-            voc.addSentence(pair[1])
-            voc.addPeople(pair[2])
-        elif config.USE_PERSONA is not True:
-            voc.addSentence(pair[0])
-            voc.addSentence(pair[1])
+        voc.addSentence(pair[0])
+        voc.addSentence(pair[1])
     print("Counted words:", voc.num_words)
     print("Counted people:", voc.num_people)
     return voc, pairs

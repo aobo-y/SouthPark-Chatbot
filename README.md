@@ -36,21 +36,24 @@ python3 chatbot.py --mode chat --speaker cartman
 
 ## Config
 
-The model parameters can be tuned in `src/config.py`
+The model settings can be modified in `src/config.py`
 
 Parameters | Description
 -----|------
+DATA_MODE | choose which data set to train on: pretrain_on_cornell/pretrain_on_southpark/finetune_on_southpark
 MAX_LENGTH | maximum sentence length to consider
 MIN_COUNT | minimum word count threshold for trimming
-LOAD_CHECKPOINT | whether to load the checkpoints
+N_ITER | training iterations
+LOAD_CHECKPOINT | whether to load the checkpoints, if true, need to set CHECKPOINT_ITER
 ATTN_MODEL | type of the attention model: dot/general/concat
-HIDDEN_SIZE | number of hidden units in encoder and decoder
+TRAIN_EMBEDDING | whether to update the word embeddding during training
+USE_PERSONA | whether to update the persona embedding during training
+HIDDEN_SIZE | size of the word embedding & number of hidden units in GRU
+PERSONA_SIZE | size of the persona embedding
 ENCODER_N_LAYERS | number of layers in bi-GRU encoder
 DECODER_N_LAYERS | number of layers in GRU decoder
 ENCODER_DROPOUT_RATE | dropout rate in bi-GRU encoder
 DECODER_DROPOUT_RATE | dropout rate in GRU decoder
-N_ITER | training iterations
-CLIP | gradient norm clip
 TEACHER_FORCING_RATIO | the ratio that decoder learns from ground truth instead of last output
 LR | encoder learning rate
 DECODER_LR | decoder learning rate: LR*DECODER_LR
