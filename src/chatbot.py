@@ -58,7 +58,7 @@ def build_model(load_checkpoint=config.LOAD_CHECKPOINT):
     personas = torch.nn.Embedding(voc.num_people, config.PERSONA_SIZE)
     # Initialize persona embedding with 0
     init_zeros = torch.FloatTensor(np.zeros((voc.num_people, config.PERSONA_SIZE)))
-    personas = torch.nn.Parameter(init_zeros)
+    personas.weight = torch.nn.Parameter(init_zeros)
     if loadFilename:
         embedding.load_state_dict(embedding_sd)
         personas.load_state_dict(persona_sd)
