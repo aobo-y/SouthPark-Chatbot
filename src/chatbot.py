@@ -110,6 +110,7 @@ def chat(encoder, decoder, voc, speaker_name):
 if __name__=='__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--mode', choices={'train', 'chat'}, default='train', help="mode. if not specified, it's in the train mode")
+    parser.add_argument('--speaker', default='NONE')
     args = parser.parse_args()
     voc, pairs = load_data()
     print('Speakers:', voc.people2index)
@@ -119,4 +120,4 @@ if __name__=='__main__':
         train(encoder, decoder, loadFilename, encoder_optimizer_sd, decoder_optimizer_sd, embedding, personas)
     elif args.mode == 'chat':
         encoder, decoder, loadFilename, encoder_optimizer_sd, decoder_optimizer_sd, embedding, personas = build_model(voc, load_checkpoint=True)
-        chat(encoder, decoder, voc, 'cartman')
+        chat(encoder, decoder, voc, args.speaker)

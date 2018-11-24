@@ -31,7 +31,7 @@ Start the command line interaction with the chat bot.
 
 ```bash
 cd src
-python3 chatbot.py --mode chat
+python3 chatbot.py --mode chat --speaker cartman
 ```
 
 ## Config
