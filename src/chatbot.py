@@ -19,11 +19,11 @@ from evaluate import evaluateInput
 USE_CUDA = torch.cuda.is_available()
 device = torch.device("cuda" if USE_CUDA else "cpu")
 
-def load_data(corpus_name, corpus_file):
-    corpus = os.path.join("data", corpus_name)
+def load_data():
+    corpus = os.path.join("data", config.CORPUS_NAME)
     datafile = os.path.join(corpus, config.CORPUS_FILE)
     # Load/Assemble voc and pairs
-    voc, pairs = loadPrepareData(corpus, corpus_file, datafile)
+    voc, pairs = loadPrepareData(corpus, config.CORPUS_NAME, datafile)
     # Trim voc and pairs
     pairs = trimRareWords(voc, pairs, config.MIN_COUNT)
     return voc, pairs
@@ -45,10 +45,10 @@ def build_model(load_checkpoint=config.LOAD_CHECKPOINT):
         persona_sd = checkpoint['persona']
         voc = Voc(config.CORPUS_NAME_PRETRAIN)
         voc.__dict__ = checkpoint['voc_dict']
-        _, pairs = load_data(config.CORPUS_NAME, config.CORPUS_NAME)
+        _, pairs = load_data()
     else:
         load_filename = None
-        voc, pairs = load_data(config.CORPUS_NAME, config.CORPUS_NAME)
+        voc, pairs = load_data()
 
 
     print('Building encoder and decoder ...')

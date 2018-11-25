@@ -11,7 +11,7 @@ import os
 def split_general_data(input_file, split_ratio, use_shuffle):
     with open(input_file, 'r', encoding='utf8') as f:
         lines = f.read().strip().split('\n')
-    print('Read {!s} sentences from {!s}.'.format(len(lines), input_file))
+    print(f'Read {len(lines)} sentences from {input_file}.')
     train_len = int(len(lines)*(1-2*split_ratio))
     val_len = int(len(lines)*split_ratio)
     if use_shuffle:
@@ -27,7 +27,7 @@ def split_persona_data(input_file, split_ratio, use_shuffle):
               'randy': 7, 'sharon': 8, 'gerald': 9, 'butters': 10}
     with open(input_file, 'r', encoding='utf8') as f:
         lines = f.read().strip().split('\n')
-    print('Read {!s} sentences from {!s}.'.format(len(lines), input_file))
+    print(f'Read {len(lines)} sentences from {input_file}.')
     
     person_train = []
     person_val = []
@@ -67,15 +67,15 @@ if __name__=='__main__':
     general_val = cornell_val+sp_general_val
     general_test = cornell_test+sp_general_test
     with open('general_data/train.txt', 'w', encoding='utf8') as f:
-        print('Write {!s} sentences into general_train.'.format(len(general_train)))
+        print(f'Write {len(general_train)} sentences into general_train.')
         for l in general_train:
             f.write(l+'\n')
     with open('general_data/val.txt', 'w', encoding='utf8') as f:
-        print('Write {!s} sentences into general_val.'.format(len(general_val)))
+        print(f'Write {len(general_val)} sentences into general_val.')
         for l in general_val:
             f.write(l+'\n')
     with open('general_data/test.txt', 'w', encoding='utf8') as f:
-        print('Write {!s} sentences into general_test.'.format(len(general_test)))
+        print(f'Write {len(general_test)} sentences into general_test.')
         for l in general_test:
             f.write(l+'\n')
         
@@ -84,14 +84,14 @@ if __name__=='__main__':
         os.mkdir('persona_data')
     
     with open('persona_data/train.txt', 'w', encoding='utf8') as f:
-        print('Write {!s} sentences into persona_train.'.format(len(sp_person_train)))
+        print(f'Write {len(sp_person_train)} sentences into persona_train.')
         for l in sp_person_train:
             f.write(l+'\n')
     with open('persona_data/val.txt', 'w', encoding='utf8') as f:
-        print('Write {!s} sentences into persona_val.'.format(len(sp_person_val)))
+        print(f'Write {len(sp_person_val)} sentences into persona_val.')
         for l in sp_person_val:
             f.write(l+'\n')
     with open('persona_data/test.txt', 'w', encoding='utf8') as f:
-        print('Write {!s} sentences into persona_test.'.format(len(sp_person_test)))
+        print(f'Write {len(sp_person_test)} sentences into persona_test.')
         for l in sp_person_test:
             f.write(l+'\n')
