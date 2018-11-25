@@ -13,12 +13,12 @@ class Voc:
         self.trimmed = False
         self.word2index = {}
         self.word2count = {}
-        self.index2word = {config.PAD_TOKEN: "PAD", config.SOS_TOKEN: "SOS", 
+        self.index2word = {config.PAD_TOKEN: "PAD", config.SOS_TOKEN: "SOS",
                            config.EOS_TOKEN: "EOS", config.UNK_TOKEN: "UNK"}
         self.num_words = 4  # Count SOS, EOS, PAD, UNK
         self.num_people = 11
-        self.people2index = {'NONE': 0, 'kyle': 1, 'cartman': 2, 'stan': 3, 
-                             'chef': 4, 'kenny': 5, 'mr . garrison': 6, 
+        self.people2index = {'NONE': 0, 'kyle': 1, 'cartman': 2, 'stan': 3,
+                             'chef': 4, 'kenny': 5, 'mr . garrison': 6,
                              'randy': 7, 'sharon': 8, 'gerald': 9, 'butters': 10}
 
     def addSentence(self, sentence):
@@ -32,7 +32,7 @@ class Voc:
             self.index2word[self.num_words] = word
             self.num_words += 1
         else:
-            self.word2count[word] += 1       
+            self.word2count[word] += 1
 
     # Remove words below a certain count threshold
     def trim(self, min_count):
@@ -194,26 +194,26 @@ def speakerToId(speaker_batch, voc):
     speaker_ids = []
     for speaker in speaker_batch:
         speaker_id = voc.people2index[speaker]
-        speaker_ids.append([speaker_id]*config.MAX_LENGTH)
+        speaker_ids.append([speaker_id] * config.MAX_LENGTH)
     speaker_ids = torch.LongTensor(speaker_ids)
     speaker_ids = speaker_ids.t()
     speaker_ids = torch.unsqueeze(speaker_ids, 1)
     return speaker_ids
-        
-    
+
+
 # Returns all items for a given batch of pairs
 def batch2TrainData(voc, pair_batch):
     pair_batch.sort(key=lambda x: len(x[0].split(" ")), reverse=True)
     input_batch, output_batch, speaker_batch = [], [], []
     for pair in pair_batch:
-        if len(pair)==3 and config.USE_PERSONA:
-            input_batch.append(pair[0])
-            output_batch.append(pair[1])
+        input_batch.append(pair[0])
+        output_batch.append(pair[1])
+
+        if len(pair) == 3 and config.USE_PERSONA:
             speaker_batch.append(pair[2])
         elif config.USE_PERSONA is not True:
-            input_batch.append(pair[0])
-            output_batch.append(pair[1])
             speaker_batch.append('NONE')
+
     inp, lengths = inputVar(input_batch, voc)
     output, mask, max_target_len = outputVar(output_batch, voc)
     speaker = speakerToId(speaker_batch, voc)

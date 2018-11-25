@@ -2,12 +2,12 @@
 SouthPark Chatbot
 """
 
-import torch
 import os
 import argparse
+import torch
+from torch import optim
 import numpy as np
 
-from torch import optim
 import config
 from data_util import loadPrepareData, trimRareWords, Voc
 from search_decoder import GreedySearchDecoder, BeamSearchDecoder
@@ -28,16 +28,15 @@ def load_data(corpus_name, corpus_file):
     pairs = trimRareWords(voc, pairs, config.MIN_COUNT)
     return voc, pairs
 
-
 def build_model(load_checkpoint=config.LOAD_CHECKPOINT):
     if load_checkpoint:
-        loadFilename = os.path.join(config.SAVE_DIR, config.MODEL_NAME, config.CORPUS_NAME_PRETRAIN,
+        load_filename = os.path.join(config.SAVE_DIR, config.MODEL_NAME, config.CORPUS_NAME_PRETRAIN,
                                 '{}-{}_{}'.format(config.ENCODER_N_LAYERS, config.DECODER_N_LAYERS, config.HIDDEN_SIZE),
                                 '{}_checkpoint.tar'.format(config.CHECKPOINT_ITER))
         # If loading on same machine the model was trained on
-        checkpoint = torch.load(loadFilename)
+        checkpoint = torch.load(load_filename)
         # If loading a model trained on GPU to CPU
-        #checkpoint = torch.load(loadFilename, map_location=torch.device('cpu'))
+        #checkpoint = torch.load(load_filename, map_location=torch.device('cpu'))
         encoder_sd = checkpoint['en']
         decoder_sd = checkpoint['de']
         encoder_optimizer_sd = checkpoint['en_opt']
@@ -48,7 +47,7 @@ def build_model(load_checkpoint=config.LOAD_CHECKPOINT):
         voc.__dict__ = checkpoint['voc_dict']
         _, pairs = load_data(config.CORPUS_NAME, config.CORPUS_NAME)
     else:
-        loadFilename = None
+        load_filename = None
         voc, pairs = load_data(config.CORPUS_NAME, config.CORPUS_NAME)
 
 
@@ -59,14 +58,14 @@ def build_model(load_checkpoint=config.LOAD_CHECKPOINT):
     # Initialize persona embedding with 0
     init_zeros = torch.FloatTensor(np.zeros((voc.num_people, config.PERSONA_SIZE)))
     personas.weight = torch.nn.Parameter(init_zeros)
-    if loadFilename:
+    if load_filename:
         embedding.load_state_dict(embedding_sd)
         personas.load_state_dict(persona_sd)
     # Initialize encoder & decoder models
     encoder = EncoderRNN(config.HIDDEN_SIZE, embedding, config.ENCODER_N_LAYERS, config.ENCODER_DROPOUT_RATE)
     decoder = DecoderRNN(config.ATTN_MODEL, embedding, personas, config.HIDDEN_SIZE, config.PERSONA_SIZE, voc.num_words,
                          config.DECODER_N_LAYERS, config.DECODER_DROPOUT_RATE, use_persona=config.USE_PERSONA)
-    if loadFilename:
+    if load_filename:
         encoder.load_state_dict(encoder_sd)
         decoder.load_state_dict(decoder_sd)
     # Use appropriate device
@@ -74,13 +73,13 @@ def build_model(load_checkpoint=config.LOAD_CHECKPOINT):
     decoder = decoder.to(device)
     print('Models built and ready to go!')
     if load_checkpoint:
-        return voc, pairs, encoder, decoder, loadFilename, encoder_optimizer_sd, decoder_optimizer_sd, embedding, personas
+        return voc, pairs, encoder, decoder, load_filename, encoder_optimizer_sd, decoder_optimizer_sd, embedding, personas
     else:
-        return voc, pairs, encoder, decoder, loadFilename, None, None, embedding, personas
+        return voc, pairs, encoder, decoder, load_filename, None, None, embedding, personas
 
 
 
-def train(voc, pairs, encoder, decoder, loadFilename, encoder_optimizer_sd, decoder_optimizer_sd, embedding, personas):
+def train(voc, pairs, encoder, decoder, load_filename, encoder_optimizer_sd, decoder_optimizer_sd, embedding, personas):
     # Ensure dropout layers are in train mode
     encoder.train()
     decoder.train()
@@ -90,16 +89,16 @@ def train(voc, pairs, encoder, decoder, loadFilename, encoder_optimizer_sd, deco
     encoder_optimizer = optim.Adam(encoder.parameters(), lr=config.LR)
     decoder_optimizer = optim.Adam(decoder.parameters(), lr=config.LR * config.DECODER_LR)
 
-    if loadFilename:
+    if load_filename:
         encoder_optimizer.load_state_dict(encoder_optimizer_sd)
         decoder_optimizer.load_state_dict(decoder_optimizer_sd)
 
     # Run training iterations
     print("Starting Training!")
     trainIters(config.MODEL_NAME, voc, pairs, encoder, decoder, encoder_optimizer, decoder_optimizer,
-               embedding, personas, config.ENCODER_N_LAYERS, config.DECODER_N_LAYERS, config.HIDDEN_SIZE, 
-               config.SAVE_DIR, config.N_ITER, config.BATCH_SIZE, config.PRINT_EVERY, config.SAVE_EVERY, 
-               config.CLIP, config.TEACHER_FORCING_RATIO, config.CORPUS_NAME, loadFilename)
+               embedding, personas, config.ENCODER_N_LAYERS, config.DECODER_N_LAYERS, config.HIDDEN_SIZE,
+               config.SAVE_DIR, config.N_ITER, config.BATCH_SIZE, config.PRINT_EVERY, config.SAVE_EVERY,
+               config.CLIP, config.TEACHER_FORCING_RATIO, config.CORPUS_NAME, load_filename)
 
 
 def chat(encoder, decoder, voc, speaker_name):
@@ -108,25 +107,29 @@ def chat(encoder, decoder, voc, speaker_name):
     decoder.eval()
 
     # Initialize search module
-    speaker_id = voc.people2index[speaker_name]
     if config.BEAM_SEARCH_ON:
-        searcher = BeamSearchDecoder(encoder, decoder, speaker_id)
+        searcher = BeamSearchDecoder(encoder, decoder)
     else:
-        searcher = GreedySearchDecoder(encoder, decoder, speaker_id)
+        searcher = GreedySearchDecoder(encoder, decoder)
 
     # Begin chatting (uncomment and run the following line to begin)
-    evaluateInput(encoder, decoder, searcher, voc)
+    speaker = voc.people2index[speaker_name]
+    evaluateInput(searcher, voc, speaker)
 
-if __name__=='__main__':
+
+def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--mode', choices={'train', 'chat'}, default='train', help="mode. if not specified, it's in the train mode")
     parser.add_argument('--speaker', default='NONE')
     args = parser.parse_args()
-    
+
     if args.mode == 'train':
-        voc, pairs, encoder, decoder, loadFilename, encoder_optimizer_sd, decoder_optimizer_sd, embedding, personas = build_model()
-        train(voc, pairs, encoder, decoder, loadFilename, encoder_optimizer_sd, decoder_optimizer_sd, embedding, personas)
+        voc, pairs, encoder, decoder, load_filename, encoder_optimizer_sd, decoder_optimizer_sd, embedding, personas = build_model()
+        train(voc, pairs, encoder, decoder, load_filename, encoder_optimizer_sd, decoder_optimizer_sd, embedding, personas)
     elif args.mode == 'chat':
-        voc, pairs, encoder, decoder, loadFilename, encoder_optimizer_sd, decoder_optimizer_sd, embedding, personas = build_model(load_checkpoint=True)
+        voc, pairs, encoder, decoder, load_filename, encoder_optimizer_sd, decoder_optimizer_sd, embedding, personas = build_model(load_checkpoint=True)
         print('Possible speakers:', voc.people2index)
         chat(encoder, decoder, voc, args.speaker)
+
+if __name__ =='__main__':
+    main()
