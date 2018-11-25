@@ -28,7 +28,6 @@ def load_data(corpus_name, corpus_file):
     pairs = trimRareWords(voc, pairs, config.MIN_COUNT)
     return voc, pairs
 
-
 def build_model(load_checkpoint=config.LOAD_CHECKPOINT):
     if load_checkpoint:
         load_filename = os.path.join(config.SAVE_DIR, config.MODEL_NAME, config.CORPUS_NAME_PRETRAIN,
@@ -115,7 +114,7 @@ def chat(encoder, decoder, voc, speaker_name):
         searcher = GreedySearchDecoder(encoder, decoder, speaker_id)
 
     # Begin chatting (uncomment and run the following line to begin)
-    evaluateInput(encoder, decoder, searcher, voc)
+    evaluateInput(searcher, voc)
 
 
 def main():
@@ -132,5 +131,5 @@ def main():
         print('Possible speakers:', voc.people2index)
         chat(encoder, decoder, voc, args.speaker)
 
-if __name__=='__main__':
+if __name__ =='__main__':
     main()
