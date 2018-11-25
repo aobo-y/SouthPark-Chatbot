@@ -137,6 +137,7 @@ def trainIters(model_name, voc, pairs, encoder, decoder, encoder_optimizer, deco
             directory = os.path.join(save_dir, model_name, corpus_name, '{}-{}_{}'.format(encoder_n_layers, decoder_n_layers, hidden_size))
             if not os.path.exists(directory):
                 os.makedirs(directory)
+
             torch.save({
                 'iteration': iteration,
                 'en': encoder.state_dict(),

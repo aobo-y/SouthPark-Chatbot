@@ -25,13 +25,12 @@ class GreedySearchDecoder(nn.Module):
         all_scores: collections of words scores
     """
 
-    def __init__(self, encoder, decoder, speaker_id):
+    def __init__(self, encoder, decoder):
         super(GreedySearchDecoder, self).__init__()
         self.encoder = encoder
         self.decoder = decoder
-        self.speaker = speaker_id
 
-    def forward(self, input_seq, input_length, max_length):
+    def forward(self, input_seq, input_length, speaker):
         # Forward input through encoder model
         encoder_outputs, encoder_hidden = self.encoder(input_seq, input_length)
         # Prepare encoder's final hidden layer to be first hidden input to the decoder
@@ -42,10 +41,10 @@ class GreedySearchDecoder(nn.Module):
         all_tokens = torch.zeros([0], device=device, dtype=torch.long)
         all_scores = torch.zeros([0], device=device)
         # Iteratively decode one word token at a time
-        for _ in range(max_length):
+        for _ in range(config.MAX_LENGTH):
             # Forward pass through decoder
             # Transform speaker_id from int into tensor with shape=(1, 1)
-            speaker_id = torch.LongTensor([self.speaker])
+            speaker_id = torch.LongTensor([speaker])
             speaker_id = torch.unsqueeze(speaker_id, 1)
             speaker_id = speaker_id.to(device)
             decoder_output, decoder_hidden = self.decoder(decoder_input, speaker_id, decoder_hidden, encoder_outputs)
@@ -70,12 +69,11 @@ class BeamSearchDecoder(nn.Module):
         all_tokens: collections of words tokens
         all_scores: collections of words scores
     """
-    
-    def __init__(self, encoder, decoder, speaker_id):
+
+    def __init__(self, encoder, decoder):
         super(BeamSearchDecoder, self).__init__()
         self.encoder = encoder
         self.decoder = decoder
-        self.speaker = speaker_id
         self.beam_width = config.BEAM_WIDTH
 
     class BeamSearchNode(object):
@@ -91,9 +89,9 @@ class BeamSearchDecoder(nn.Module):
             # Add here a function for shaping a reward
             return self.logp / float(self.leng - 1 + 1e-6) + alpha * reward
 
-    def forward(self, input_seq, input_length, max_length):
+    def forward(self, input_seq, input_length, speaker):
         topk = 1  # how many sentence do you want to generate
-        
+
         # decoding goes sentence by sentence
         # for idx in range(target_tensor.size(0)):
         batch_size = 1 # TODO: don't know how to calculate
@@ -136,7 +134,7 @@ class BeamSearchDecoder(nn.Module):
 
                 # Forward pass through decoder
                 # Transform speaker_id from int into tensor with shape=(1, 1)
-                speaker_id = torch.LongTensor([self.speaker])
+                speaker_id = torch.LongTensor([speaker])
                 speaker_id = torch.unsqueeze(speaker_id, 1)
                 speaker_id = speaker_id.to(device)
                 # decode for one step using decoder
