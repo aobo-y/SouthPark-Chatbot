@@ -94,7 +94,7 @@ def train(input_variable, lengths, target_variable, mask, max_target_len, speake
 
 def trainIters(model_name, voc, pairs, encoder, decoder, encoder_optimizer, decoder_optimizer,
                embedding, personas, encoder_n_layers, decoder_n_layers, hidden_size, save_dir, n_iteration,
-               batch_size, print_every, save_every, clip, teacher_forcing_ratio, corpus_name, loadFilename):
+               batch_size, print_every, save_every, clip, teacher_forcing_ratio, corpus_name, load_filename):
     """
     When we save our model, we save a tarball containing the encoder and decoder state_dicts (parameters),
     the optimizers’ state_dicts, the loss, the iteration, etc.
@@ -109,9 +109,9 @@ def trainIters(model_name, voc, pairs, encoder, decoder, encoder_optimizer, deco
     # Initializations
     start_iteration = 1
     print_loss = 0
-    if loadFilename:
+    if load_filename:
         # If loading on same machine the model was trained on
-        checkpoint = torch.load(loadFilename)
+        checkpoint = torch.load(load_filename)
         start_iteration = checkpoint['iteration']+1
 
     # Training loop
