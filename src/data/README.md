@@ -1,6 +1,6 @@
 # Data
 
-Please run `python split_data.py` to get the splited train/val/test data.<br>
+Please run `python3 split_data.py` to get the splited train/val/test data.<br>
 
 The script will automactically general two folders: 
 * general_data: store `cornell movie-dialogs` data and `south_park/general_train.txt` data
