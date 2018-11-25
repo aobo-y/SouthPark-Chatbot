@@ -8,6 +8,9 @@ def cal_bleu(hypothesis, references, weights, n_gram, individual_or_cumulative):
 
 
 def decide_which_bleu(hypothesis, n_gram=4,individual_or_cumulative='cumulative'):
+    '''
+    individual_or_cumulative==['cumulative','individual'] chose one of two choices.
+    '''
     if len(hypothesis)==0:
         print('error, length of hypothesis is zero')
         return -2
@@ -23,7 +26,5 @@ def decide_which_bleu(hypothesis, n_gram=4,individual_or_cumulative='cumulative'
     weights1 = [(1,0,0,0), (0.5,0.5,0,0), (1.0/3,1.0/3,1.0/3,0), (0.25,0.25,0.25,0.25)]
     weights2 = [(1,0,0,0), (0,1,0,0), (0,0,1,0), (0,0,0,1)]
     if individual_or_cumulative=='cumulative':
-        if len(hypothesis)>=4:
-            return weights1[n_gram-1]
-        elif len(hypothesis)==3:
-            return weights1[]
+        return weights1[n_gram-1]
+    elif individual_or_cumulative=='individual'
