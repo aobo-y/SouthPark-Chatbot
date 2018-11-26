@@ -19,8 +19,6 @@ def cal_bleu(hypothesis, \
         smoothing_function=cc.method1
     # get weight
     weight = decide_which_bleu(hypothesis, n_gram, individual_or_cumulative)
-    print(weight)
-    print(references)
     # calculate bleu score
     if weight != -2 and weight != -1 and weight != 0:
         score = sentence_bleu(references, hypothesis, weights=weight, smoothing_function=smoothing_function)
