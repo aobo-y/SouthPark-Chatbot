@@ -22,6 +22,7 @@ USE_CUDA = torch.cuda.is_available()
 device = torch.device("cuda" if USE_CUDA else "cpu")
 
 def init_word_embedding(embedding_path):
+    print('Init word embedding from', embedding_path)
     embedding_path = os.path.join('./', embedding_path)
     with open(embedding_path, encoding='utf-8') as file:
         lines = file.read().strip().split('\n')
@@ -30,6 +31,8 @@ def init_word_embedding(embedding_path):
         embedding_of_words = [[float(str_emb) for str_emb in l[1:]] for l in tokens_of_lines]
 
         word_map = EmbeddingMap(words)
+        print(f'Load {word_map.size()} word embedding')
+
         for special_token in config.SPECIAL_WORD_EMBEDDING_TOKENS.values():
             if not word_map.has(special_token):
                 word_map.append(special_token)

@@ -9,10 +9,9 @@ import config
 # Lowercase and remove non-letter characters
 def normalizeString(s):
     s = s.lower()
-    s = re.sub(r"([.!?])", r" \1", s)
-    s = re.sub(r"[^a-zA-Z.!?]+", r" ", s)
+    s = re.sub(r'([.!?,\'])', r' \1', s)
+    s = re.sub(r'[^a-zA-Z.!?,\']+', r' ', s)
     return s
-
 
 def unicodeToAscii(s):
     return ''.join(
