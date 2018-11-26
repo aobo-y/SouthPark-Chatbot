@@ -1,23 +1,18 @@
 # -*- coding: utf-8 -*-
 
 # Corpus information
-# different mode: cornell/pretrain/finetune
-DATA_MODE = 'cornell'
-# pretrain on cornell movie
-if DATA_MODE == 'cornell':
-    CORPUS_NAME = "cornell movie-dialogs corpus"
-    CORPUS_NAME_PRETRAIN = "cornell movie-dialogs corpus"
-    CORPUS_FILE = "formatted_movie_lines.txt"
-# pretrain on south park general
-if DATA_MODE == 'pretrain':
-    CORPUS_NAME = "south_park"
-    CORPUS_NAME_PRETRAIN = "cornell movie-dialogs corpus"
-    CORPUS_FILE = "general_train.txt"
+# different mode: general_data/persona_data
+DATA_MODE = 'general_data'
+# pretrain on cornell movie and south park general
+if DATA_MODE == 'general_data':
+    CORPUS_NAME = "general_data"
+    CORPUS_NAME_PRETRAIN = "general_data"
+    CORPUS_FILE = "train.txt"
 # fine tune on south park persona
-if DATA_MODE == 'finetune':
-    CORPUS_NAME = "south_park"
-    CORPUS_NAME_PRETRAIN = "cornell movie-dialogs corpus"
-    CORPUS_FILE = "fine_tune.txt"
+if DATA_MODE == 'persona_data':
+    CORPUS_NAME = "persona_data"
+    CORPUS_NAME_PRETRAIN = "general_data"
+    CORPUS_FILE = "train.txt"
 
 # Word Embedding
 WORD_EMBEDDING_FILE = 'data/word_embeddings/glove.6B.50d.test.txt'

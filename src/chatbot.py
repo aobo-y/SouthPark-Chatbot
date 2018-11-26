@@ -21,7 +21,6 @@ from embedding_map import EmbeddingMap
 USE_CUDA = torch.cuda.is_available()
 device = torch.device("cuda" if USE_CUDA else "cpu")
 
-
 def init_word_embedding(embedding_path):
     embedding_path = os.path.join('./', embedding_path)
     with open(embedding_path, encoding='utf-8') as file:
@@ -62,6 +61,7 @@ def load_data(corpus_name, corpus_file, word_map):
     return pairs
 
 
+
 def build_model(load_checkpoint=config.LOAD_CHECKPOINT):
     checkpoint = None
 
@@ -76,8 +76,8 @@ def build_model(load_checkpoint=config.LOAD_CHECKPOINT):
         # If loading a model trained on GPU to CPU
         #checkpoint = torch.load(load_filename, map_location=torch.device('cpu'))
         embedding_sd = checkpoint['embedding']
-
         persona_sd = checkpoint['persona']
+
         word_map = EmbeddingMap()
         word_map.__dict__ = checkpoint['word_map_dict']
         person_map = EmbeddingMap()
@@ -99,6 +99,7 @@ def build_model(load_checkpoint=config.LOAD_CHECKPOINT):
 
         # Initialize persona embedding
         person_map, personas = init_persona_embedding(config.PERSONS, config.PERSONA_SIZE)
+
 
 
     # make sure config is the same as init
