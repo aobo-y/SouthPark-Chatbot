@@ -9,9 +9,16 @@ import config
 # Lowercase and remove non-letter characters
 def normalizeString(s):
     s = s.lower()
-    s = re.sub(r'([.!?,\'])', r' \1', s)
-    s = re.sub(r'[^a-zA-Z.!?,\']+', r' ', s)
-    return s
+    # give a leading & ending spaces to punctuations
+    s = re.sub(r'([.!?,])', r' \1 ', s)
+    # give a leading space to '
+    s = re.sub(r'(\')', r' \1', s)
+    # purge unrecognized token with space
+    s = re.sub(r'[^a-z.!?,\']+', r' ', s)
+    # squeeze multiple spaces
+    s = re.sub(r'([ ]+)', r' ', s)
+    # remove extra leading & ending space
+    return s.strip()
 
 def unicodeToAscii(s):
     return ''.join(
@@ -86,6 +93,7 @@ def trimRareWords(word_map, pairs):
         if keep_input and keep_output:
             keep_pairs.append(pair)
     print(nword)
+    print(len(nword))
 
     print("Trimmed from {} pairs to {}, {:.4f} of total".format(len(pairs), len(keep_pairs), len(keep_pairs) / len(pairs)))
     return keep_pairs
