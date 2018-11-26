@@ -67,8 +67,8 @@ def build_model(load_checkpoint=config.LOAD_CHECKPOINT):
 
     if load_checkpoint:
         load_filename = os.path.join(config.SAVE_DIR, config.MODEL_NAME, config.CORPUS_NAME_PRETRAIN,
-                                '{}-{}_{}'.format(config.ENCODER_N_LAYERS, config.DECODER_N_LAYERS, config.HIDDEN_SIZE),
-                                '{}_checkpoint.tar'.format(config.CHECKPOINT_ITER))
+                                f'{config.ENCODER_N_LAYERS}-{config.DECODER_N_LAYERS}_{config.HIDDEN_SIZE}',
+                                f'{config.CHECKPOINT_ITER}_checkpoint.tar')
         # If loading on same machine the model was trained on
         checkpoint = torch.load(load_filename)
 
@@ -143,10 +143,10 @@ def train(pairs, encoder, decoder, embedding, personas, word_map, person_map, cu
         decoder_optimizer.load_state_dict(checkpoint['de_opt'])
 
     # Run training iterations
-    iter = current_iteration + 1
-    print(f'Starting Training from iteration {iter}!')
+    iteration = current_iteration + 1
+    print(f'Starting Training from iteration {iteration}!')
     trainIters(word_map, person_map, pairs, encoder, decoder, encoder_optimizer, decoder_optimizer,
-               embedding, personas, config.N_ITER, config.CORPUS_NAME, iter)
+               embedding, personas, config.N_ITER, config.CORPUS_NAME, iteration)
 
 
 def chat(encoder, decoder, word_map, speaker_id):
@@ -167,7 +167,7 @@ def chat(encoder, decoder, word_map, speaker_id):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--mode', choices={'train', 'chat'}, default='train', help="mode. if not specified, it's in the train mode")
-    parser.add_argument('--speaker', default='NONE')
+    parser.add_argument('--speaker', default='<none>')
     args = parser.parse_args()
 
     if args.mode == 'train':
