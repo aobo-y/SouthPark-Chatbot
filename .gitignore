@@ -18,3 +18,7 @@ examples/data
 examples/graphs/*
 examples/checkpoints/*
 examples/visualization/*
+
+# splitted data
+src/data/general_data/*
+src/data/persona_data/*
