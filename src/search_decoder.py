@@ -30,7 +30,7 @@ class GreedySearchDecoder(nn.Module):
         self.encoder = encoder
         self.decoder = decoder
 
-    def forward(self, input_seq, input_length, speaker):
+    def forward(self, input_seq, input_length, speaker_id):
         # Forward input through encoder model
         encoder_outputs, encoder_hidden = self.encoder(input_seq, input_length)
         # Prepare encoder's final hidden layer to be first hidden input to the decoder
@@ -44,10 +44,9 @@ class GreedySearchDecoder(nn.Module):
         for _ in range(config.MAX_LENGTH):
             # Forward pass through decoder
             # Transform speaker_id from int into tensor with shape=(1, 1)
-            speaker_id = torch.LongTensor([speaker])
-            speaker_id = torch.unsqueeze(speaker_id, 1)
-            speaker_id = speaker_id.to(device)
-            decoder_output, decoder_hidden = self.decoder(decoder_input, speaker_id, decoder_hidden, encoder_outputs)
+            speaker_input = torch.LongTensor([[speaker_id]])
+            speaker_input = speaker_input.to(device)
+            decoder_output, decoder_hidden = self.decoder(decoder_input, speaker_input, decoder_hidden, encoder_outputs)
             # Obtain most likely word token and its softmax score
             decoder_scores, decoder_input = torch.max(decoder_output, dim=1)
             # Record token and score
@@ -89,7 +88,7 @@ class BeamSearchDecoder(nn.Module):
             # Add here a function for shaping a reward
             return self.logp / float(self.leng - 1 + 1e-6) + alpha * reward
 
-    def forward(self, input_seq, input_length, speaker):
+    def forward(self, input_seq, input_length, speaker_id):
         topk = 1  # how many sentence do you want to generate
 
         # decoding goes sentence by sentence
@@ -134,11 +133,10 @@ class BeamSearchDecoder(nn.Module):
 
                 # Forward pass through decoder
                 # Transform speaker_id from int into tensor with shape=(1, 1)
-                speaker_id = torch.LongTensor([speaker])
-                speaker_id = torch.unsqueeze(speaker_id, 1)
-                speaker_id = speaker_id.to(device)
+                speaker_input = torch.LongTensor([[speaker_id]])
+                speaker_input = speaker_input.to(device)
                 # decode for one step using decoder
-                decoder_output, decoder_hidden = self.decoder(decoder_input, speaker_id, decoder_hidden, encoder_outputs)
+                decoder_output, decoder_hidden = self.decoder(decoder_input, speaker_input, decoder_hidden, encoder_outputs)
                 # PUT HERE REAL BEAM SEARCH OF TOP
                 log_prob, indexes = torch.topk(decoder_output, self.beam_width)
                 nextnodes = []

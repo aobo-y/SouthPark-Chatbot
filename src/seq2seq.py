@@ -15,16 +15,16 @@ device = torch.device("cuda" if USE_CUDA else "cpu")
 def maskNLLLoss(inp, target, mask):
     # Calculate our loss based on our decoder’s output tensor, the target tensor,
     # and a binary mask tensor describing the padding of the target tensor.
-    nTotal = mask.sum().float()
-    crossEntropy = -torch.log(torch.gather(inp, 1, target.view(-1, 1)))
-    loss = crossEntropy.masked_select(mask).mean()
+    n_total = mask.sum().float()
+    cross_entropy = -torch.log(torch.gather(inp, 1, target.view(-1, 1)))
+    loss = cross_entropy.masked_select(mask).mean()
     loss = loss.to(device)
-    return loss, nTotal.mean()
+    return loss, n_total.mean()
 
 
-def train(input_variable, lengths, target_variable, mask, max_target_len, speaker_id,
+def train(input_variable, lengths, target_variable, mask, max_target_len, speaker_input,
           encoder, decoder, encoder_optimizer, decoder_optimizer,
-          batch_size, clip, teacher_forcing_ratio, max_length = config.MAX_LENGTH):
+          batch_size):
     # Zero gradients
     encoder_optimizer.zero_grad()
     decoder_optimizer.zero_grad()
@@ -34,7 +34,7 @@ def train(input_variable, lengths, target_variable, mask, max_target_len, speake
     lengths = lengths.to(device)
     target_variable = target_variable.to(device)
     mask = mask.to(device)
-    speaker_id = speaker_id.to(device)
+    speaker_input = speaker_input.to(device)
 
     # Initialize variables
     loss = 0.
@@ -52,38 +52,34 @@ def train(input_variable, lengths, target_variable, mask, max_target_len, speake
     decoder_hidden = encoder_hidden[:decoder.n_layers]
 
     # Determine if we are using teacher forcing this iteration
-    use_teacher_forcing = True if random.random() < teacher_forcing_ratio else False
+    use_teacher_forcing = True if random.random() < config.TEACHER_FORCING_RATIO else False
 
     # Forward batch of sequences through decoder one time step at a time
-    if use_teacher_forcing:
-        for t in range(max_target_len):
-            decoder_output, decoder_hidden = decoder(decoder_input, speaker_id[t], decoder_hidden, encoder_outputs)
+    for t in range(max_target_len):
+        decoder_output, decoder_hidden = decoder(decoder_input, speaker_input, decoder_hidden, encoder_outputs)
+
+        if use_teacher_forcing:
             # Teacher forcing: next input is current target
             decoder_input = target_variable[t].view(1, -1)
-            # Calculate and accumulate loss
-            mask_loss, nTotal = maskNLLLoss(decoder_output, target_variable[t], mask[t])
-            loss += mask_loss
-            print_loss.append(mask_loss.item()*nTotal)
-            n_totals += nTotal
-    else:
-        for t in range(max_target_len):
-            decoder_output, decoder_hidden = decoder(decoder_input, speaker_id[t], decoder_hidden, encoder_outputs)
+        else:
             # No teacher forcing: next input is decoder's own current output
             _, topi = decoder_output.topk(1)
             decoder_input = torch.LongTensor([[topi[i][0] for i in range(batch_size)]])
             decoder_input = decoder_input.to(device)
-            # Calculate and accumulate loss
-            mask_loss, nTotal = maskNLLLoss(decoder_output, target_variable[t], mask[t])
-            loss += mask_loss
-            print_loss.append(mask_loss.item()*nTotal)
-            n_totals += nTotal
+
+        # Calculate and accumulate loss
+        mask_loss, n_total = maskNLLLoss(decoder_output, target_variable[t], mask[t])
+        loss += mask_loss
+        print_loss.append(mask_loss.item() * n_total)
+        n_totals += n_total
+
 
     # Perform backpropagation
     loss.backward()
 
     # Clip gradients: gradients are modified in place
-    _ = torch.nn.utils.clip_grad_norm_(encoder.parameters(), clip)
-    _ = torch.nn.utils.clip_grad_norm_(decoder.parameters(), clip)
+    _ = torch.nn.utils.clip_grad_norm_(encoder.parameters(), config.CLIP)
+    _ = torch.nn.utils.clip_grad_norm_(decoder.parameters(), config.CLIP)
 
     # Adjust model weights
     encoder_optimizer.step()
@@ -92,49 +88,43 @@ def train(input_variable, lengths, target_variable, mask, max_target_len, speake
     return sum(print_loss)/n_totals
 
 
-def trainIters(model_name, voc, pairs, encoder, decoder, encoder_optimizer, decoder_optimizer,
-               embedding, personas, encoder_n_layers, decoder_n_layers, hidden_size, save_dir, n_iteration,
-               batch_size, print_every, save_every, clip, teacher_forcing_ratio, corpus_name, load_filename):
+def trainIters(word_map, person_map, pairs, encoder, decoder, encoder_optimizer, decoder_optimizer,
+               embedding, personas, n_iteration, corpus_name, start_iteration):
     """
     When we save our model, we save a tarball containing the encoder and decoder state_dicts (parameters),
     the optimizers’ state_dicts, the loss, the iteration, etc.
     After loading a checkpoint, we will be able to use the model parameters to run inference,
     or we can continue training right where we left off.
     """
+    batch_size = config.BATCH_SIZE
 
     # Load batches for each iteration
-    training_batches = [batch2TrainData(voc, [random.choice(pairs) for _ in range(batch_size)])
+    training_batches = [batch2TrainData([random.choice(pairs) for _ in range(batch_size)], word_map, person_map)
                         for _ in range(n_iteration)]
 
     # Initializations
-    start_iteration = 1
     print_loss = 0
-    if load_filename:
-        # If loading on same machine the model was trained on
-        checkpoint = torch.load(load_filename)
-        start_iteration = checkpoint['iteration']+1
 
     # Training loop
-    for iteration in range(start_iteration, n_iteration+1):
-        training_batch = training_batches[iteration-1]
+    for iteration in range(start_iteration, n_iteration + 1):
+        training_batch = training_batches[iteration - 1]
         # extract fields from batch
-        input_variable, lengths, target_variable, mask, max_target_len, speaker = training_batch
+        input_variable, lengths, target_variable, mask, max_target_len, speaker_input = training_batch
 
         # run a training iteration with batch
-        loss = train(input_variable, lengths, target_variable, mask, max_target_len, speaker,
-                     encoder, decoder, encoder_optimizer, decoder_optimizer, batch_size,
-                     clip, teacher_forcing_ratio)
+        loss = train(input_variable, lengths, target_variable, mask, max_target_len, speaker_input,
+                     encoder, decoder, encoder_optimizer, decoder_optimizer, batch_size)
         print_loss += loss
 
         # Print progress
-        if iteration % print_every == 0:
-            print_loss_avg = print_loss / print_every
+        if iteration % config.PRINT_EVERY == 0:
+            print_loss_avg = print_loss / config.PRINT_EVERY
             print("Iteration: {}; Percent complete: {:.1f}%; Average loss: {:.4f}".format(iteration, iteration / n_iteration * 100, print_loss_avg))
             print_loss = 0
 
         # Save checkpoint
-        if iteration % save_every == 0:
-            directory = os.path.join(save_dir, model_name, corpus_name, '{}-{}_{}'.format(encoder_n_layers, decoder_n_layers, hidden_size))
+        if iteration % config.SAVE_EVERY == 0:
+            directory = os.path.join(config.SAVE_DIR, config.MODEL_NAME, corpus_name, '{}-{}_{}'.format(config.ENCODER_N_LAYERS, config.DECODER_N_LAYERS, config.HIDDEN_SIZE))
             if not os.path.exists(directory):
                 os.makedirs(directory)
 
@@ -145,7 +135,8 @@ def trainIters(model_name, voc, pairs, encoder, decoder, encoder_optimizer, deco
                 'en_opt': encoder_optimizer.state_dict(),
                 'de_opt': decoder_optimizer.state_dict(),
                 'loss': loss,
-                'voc_dict': voc.__dict__,
+                'word_map_dict': word_map.__dict__,
+                'person_map_dict': person_map.__dict__,
                 'embedding': embedding.state_dict(),
                 'persona': personas.state_dict(),
             }, os.path.join(directory, '{}_{}.tar'.format(iteration, 'checkpoint')))

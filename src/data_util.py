@@ -1,15 +1,14 @@
 # -*- coding: utf-8 -*-
 
-import torch
 import re
 import unicodedata
 import itertools
+import torch
 import config
 
 
 class Voc:
-    def __init__(self, name):
-        self.name = name
+    def __init__(self):
         self.trimmed = False
         self.word2index = {}
         self.word2count = {}
@@ -71,57 +70,47 @@ def unicodeToAscii(s):
     )
 
 
-# Read query/response pairs and return a voc object
-def readVocs(datafile, corpus_name):
+# Read query/response pairs
+def readVocs(datafile):
     print("Reading lines from %s..." % datafile)
     # Read the file and split into lines
     with open(datafile, encoding='utf-8') as f:
         lines = f.read().strip().split('\n')
     # Split every line into pairs and normalize
     pairs = [[normalizeString(s) for s in l.split('\t')] for l in lines]
-    voc = Voc(corpus_name)
-    return voc, pairs
+    return pairs
 
 
 # Returns True iff both sentences in a pair 'p' are under the MAX_LENGTH threshold
-def filterPair(p, use_persona=config.USE_PERSONA):
+def filterPair(p):
     # Input sequences need to preserve the last word for EOS token
-    if len(p)==3 and use_persona:
+    if len(p) == 3 and config.USE_PERSONA:
         return len(p[0].split(' ')) < config.MAX_LENGTH and len(p[1].split(' ')) < config.MAX_LENGTH and len(p[2]) > 1
-    elif len(p)==2 and use_persona is not True:
+    elif len(p) == 2 and config.USE_PERSONA is not True:
         return len(p[0].split(' ')) < config.MAX_LENGTH and len(p[1].split(' ')) < config.MAX_LENGTH
     else:
         return False
 
-
-# Filter pairs using filterPair condition
-def filterPairs(pairs):
-    outs=[]
-    for pair in pairs:
-        if filterPair(pair, config.USE_PERSONA) :
-            outs.append(pair)
-    return outs
-
-
 # Using the functions defined above, return a populated voc object and pairs list
-def loadPrepareData(corpus, corpus_name, datafile):
+def load_pairs(datafile):
     print("Start preparing training data ...")
-    voc, pairs = readVocs(datafile, corpus_name)
+
+    print("Reading lines from %s..." % datafile)
+    # Read the file and split into lines
+    with open(datafile, encoding='utf-8') as f:
+        lines = f.read().strip().split('\n')
+
+    # Split every line into pairs and normalize
+    pairs = [[normalizeString(s) for s in l.split('\t')] for l in lines]
+
     print("Read {!s} sentence pairs".format(len(pairs)))
-    pairs = filterPairs(pairs)
+    pairs = [pair for pair in pairs if filterPair(pair)]
     print("Trimmed to {!s} sentence pairs".format(len(pairs)))
-    print("Counting words...")
-    for pair in pairs:
-        voc.addSentence(pair[0])
-        voc.addSentence(pair[1])
-    print("Counted words:", voc.num_words)
-    print("Counted people:", voc.num_people)
-    return voc, pairs
+
+    return pairs
 
 
-def trimRareWords(voc, pairs, min_count=config.MIN_COUNT):
-    # Trim words used under the MIN_COUNT from the voc
-    voc.trim(min_count)
+def trimRareWords(word_map, pairs):
     # Filter out pairs with trimmed words
     keep_pairs = []
     for pair in pairs:
@@ -131,12 +120,12 @@ def trimRareWords(voc, pairs, min_count=config.MIN_COUNT):
         keep_output = True
         # Check input sentence
         for word in input_sentence.split(' '):
-            if word not in voc.word2index:
+            if word_map.has(word):
                 keep_input = False
                 break
         # Check output sentence
         for word in output_sentence.split(' '):
-            if word not in voc.word2index:
+            if word_map.has(word):
                 keep_output = False
                 break
 
@@ -147,64 +136,68 @@ def trimRareWords(voc, pairs, min_count=config.MIN_COUNT):
     print("Trimmed from {} pairs to {}, {:.4f} of total".format(len(pairs), len(keep_pairs), len(keep_pairs) / len(pairs)))
     return keep_pairs
 
-def indexesFromSentence(voc, sentence):
-    words = []
-    for word in sentence.split(' '):
-        if word not in voc.word2index.keys():
-            words.append(config.UNK_TOKEN)
-        else:
-            words.append(voc.word2index[word])
-    return words + [config.EOS_TOKEN]
+def indexes_from_sentence(word_map, sentence):
+    unk = config.SPECIAL_WORD_EMBEDDING_TOKENS['UNK']
+    eos = config.SPECIAL_WORD_EMBEDDING_TOKENS['EOS']
+
+    tokens = [word if word_map.has(word) else unk for word in sentence.split(' ')]
+    tokens.append(eos)
+
+    return [word_map.get_index(token) for token in tokens]
 
 
-def zeroPadding(l, fillvalue=config.PAD_TOKEN):
+def zeroPadding(l, fillvalue):
     return list(itertools.zip_longest(*l, fillvalue=fillvalue))
 
-def binaryMatrix(l, value=config.PAD_TOKEN):
+def binaryMatrix(l, fillvalue):
     m = []
     for i, seq in enumerate(l):
         m.append([])
-        for token in seq:
-            if token == config.PAD_TOKEN:
+        for index in seq:
+            if index == fillvalue:
                 m[i].append(0)
             else:
                 m[i].append(1)
     return m
 
 # Returns padded input sequence tensor and lengths
-def inputVar(l, voc):
-    indexes_batch = [indexesFromSentence(voc, sentence) for sentence in l]
+def input_var(l, word_map):
+    pad = config.SPECIAL_WORD_EMBEDDING_TOKENS['PAD']
+    fillvalue = word_map.get_index(pad)
+
+    indexes_batch = [indexes_from_sentence(word_map, sentence) for sentence in l]
     lengths = torch.tensor([len(indexes) for indexes in indexes_batch])
-    padList = zeroPadding(indexes_batch)
-    padVar = torch.LongTensor(padList)
-    return padVar, lengths
+    pad_list = zeroPadding(indexes_batch, fillvalue)
+
+    pad_var = torch.LongTensor(pad_list)
+    return pad_var, lengths
 
 # Returns padded target sequence tensor, padding mask, and max target length
-def outputVar(l, voc):
-    indexes_batch = [indexesFromSentence(voc, sentence) for sentence in l]
+def output_var(l, word_map):
+    pad = config.SPECIAL_WORD_EMBEDDING_TOKENS['PAD']
+    fillvalue = word_map.get_index(pad)
+
+    indexes_batch = [indexes_from_sentence(word_map, sentence) for sentence in l]
     max_target_len = max([len(indexes) for indexes in indexes_batch])
-    padList = zeroPadding(indexes_batch)
-    mask = binaryMatrix(padList)
+    pad_list = zeroPadding(indexes_batch, fillvalue)
+    mask = binaryMatrix(pad_list, fillvalue)
     mask = torch.ByteTensor(mask)
-    padVar = torch.LongTensor(padList)
-    return padVar, mask, max_target_len
+
+    pad_var = torch.LongTensor(pad_list)
+    return pad_var, mask, max_target_len
 
 # Return speaker_ids tensor with shape=(max_length, 1, batch_size)
-def speakerToId(speaker_batch, voc):
-    speaker_ids = []
-    for speaker in speaker_batch:
-        speaker_id = voc.people2index[speaker]
-        speaker_ids.append([speaker_id] * config.MAX_LENGTH)
-    speaker_ids = torch.LongTensor(speaker_ids)
-    speaker_ids = speaker_ids.t()
-    speaker_ids = torch.unsqueeze(speaker_ids, 1)
-    return speaker_ids
+def speaker_var(speaker_batch, person_map):
+    indexes_batch = [person_map.get_index(speaker) for speaker in speaker_batch]
+
+    return torch.LongTensor([indexes_batch]) # decoder need length as first dimension
 
 
 # Returns all items for a given batch of pairs
-def batch2TrainData(voc, pair_batch):
+def batch2TrainData(pair_batch, word_map, person_map):
     pair_batch.sort(key=lambda x: len(x[0].split(" ")), reverse=True)
     input_batch, output_batch, speaker_batch = [], [], []
+
     for pair in pair_batch:
         input_batch.append(pair[0])
         output_batch.append(pair[1])
@@ -212,9 +205,10 @@ def batch2TrainData(voc, pair_batch):
         if len(pair) == 3 and config.USE_PERSONA:
             speaker_batch.append(pair[2])
         elif config.USE_PERSONA is not True:
-            speaker_batch.append('NONE')
+            speaker_batch.append(config.NONE_PERSONA)
 
-    inp, lengths = inputVar(input_batch, voc)
-    output, mask, max_target_len = outputVar(output_batch, voc)
-    speaker = speakerToId(speaker_batch, voc)
-    return inp, lengths, output, mask, max_target_len, speaker
+    inp, lengths = input_var(input_batch, word_map)
+    output, mask, max_target_len = output_var(output_batch, word_map)
+
+    speaker_input = speaker_var(speaker_batch, person_map)
+    return inp, lengths, output, mask, max_target_len, speaker_input
