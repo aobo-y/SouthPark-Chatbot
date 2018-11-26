@@ -11,10 +11,8 @@ def normalizeString(s):
     s = s.lower()
     # give a leading & ending spaces to punctuations
     s = re.sub(r'([.!?,])', r' \1 ', s)
-    # give a leading space to '
-    s = re.sub(r'(\')', r' \1', s)
     # purge unrecognized token with space
-    s = re.sub(r'[^a-z.!?,\']+', r' ', s)
+    s = re.sub(r'[^a-z.!?,]+', r' ', s)
     # squeeze multiple spaces
     s = re.sub(r'([ ]+)', r' ', s)
     # remove extra leading & ending space
