@@ -1,0 +1,19 @@
+{
+    "test_type": "test",
+    
+    "file_dir":{
+        "general":{
+            "valid": "../src/data/general_data/val.txt",
+            "test": "../src/data/general_data/test.txt"
+        },
+        "personal":{
+            "valid": "../src/data/persona_data/val.txt",
+            "test": "../src/data/persona_data/test.txt"
+        }
+    },
+    "model":{
+        "type": "general"
+
+    },
+    "bleu":{}
+}
