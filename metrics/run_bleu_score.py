@@ -19,12 +19,12 @@ def read_config(file_path):
     json_ob = json.load(open(file_path,'r'))
     return json_ob
 
-def run(config):
+def run(configs):
     #
-    type_seq2seq = config['model']['type']
-    val_or_test = config['test_type']
+    type_seq2seq = configs['model']['type']
+    val_or_test = configs['test_type']
     # read file
-    with open(config['file_dir'][type_seq2seq][val_or_test], 'w') as re:
+    with open(configs['file_dir'][type_seq2seq][val_or_test], 'w') as re:
         count_of_sent = 0
         sum_score = 0
         for line in re:
@@ -46,5 +46,5 @@ def run(config):
             return average_bleu
 
 if __name__ == '__main__':
-    config = read_config('config.json')
-    run(config)
+    configs = read_config('config.json')
+    run(configs)
