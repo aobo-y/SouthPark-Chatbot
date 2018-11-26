@@ -1,6 +1,8 @@
 from bleu import *
 
 if __name__ == "__main__":
+    # test decide_which_bleu function
+
     h1=['hello','world']
     r1=['hello','world']
     h2=['this', 'is', 'small', 'test']
