@@ -21,15 +21,11 @@ WORD_EMBEDDING_FILE = 'data/word_embeddings/glove.6B.50d.test.txt'
 # Parameters for processing the dataset
 MAX_LENGTH = 20  # Maximum sentence length to consider
 MIN_COUNT = 3    # Minimum word count threshold for trimming
-PAD_TOKEN = 0    # Padding token id
-SOS_TOKEN = 1    # Start of Sentence token id
-EOS_TOKEN = 2    # End of Sentence token id
-UNK_TOKEN = 3    # Unknown token id
 
 SPECIAL_WORD_EMBEDDING_TOKENS = {
-    'PAD': '<pad>',
-    'SOS': '<sos>',
-    'EOS': '<eos>',
+    'PAD': '<pad>', # Padding token
+    'SOS': '<sos>', # Start of Sentence token
+    'EOS': '<eos>', # End of Sentence token
     'UNK': '<unk>' # pretrained word embedding usually has this
 }
 

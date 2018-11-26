@@ -22,9 +22,8 @@ def maskNLLLoss(inp, target, mask):
     return loss, n_total.mean()
 
 
-def train(input_variable, lengths, target_variable, mask, max_target_len, speaker_input,
-          encoder, decoder, encoder_optimizer, decoder_optimizer,
-          batch_size):
+def train(word_map, input_variable, lengths, target_variable, mask, max_target_len, speaker_input,
+          encoder, decoder, encoder_optimizer, decoder_optimizer, batch_size):
     # Zero gradients
     encoder_optimizer.zero_grad()
     decoder_optimizer.zero_grad()
@@ -45,7 +44,8 @@ def train(input_variable, lengths, target_variable, mask, max_target_len, speake
     encoder_outputs, encoder_hidden = encoder(input_variable, lengths)
 
     # Create initial decoder input
-    decoder_input = torch.LongTensor([[config.SOS_TOKEN for _ in range(batch_size)]])
+    sos = word_map.get_index(config.SPECIAL_WORD_EMBEDDING_TOKENS['SOS'])
+    decoder_input = torch.LongTensor([[sos for _ in range(batch_size)]])
     decoder_input = decoder_input.to(device)
 
     # Set initial decoder hidden state to the encoder's final hidden state
@@ -112,7 +112,7 @@ def trainIters(word_map, person_map, pairs, encoder, decoder, encoder_optimizer,
         input_variable, lengths, target_variable, mask, max_target_len, speaker_input = training_batch
 
         # run a training iteration with batch
-        loss = train(input_variable, lengths, target_variable, mask, max_target_len, speaker_input,
+        loss = train(word_map, input_variable, lengths, target_variable, mask, max_target_len, speaker_input,
                      encoder, decoder, encoder_optimizer, decoder_optimizer, batch_size)
         print_loss += loss
 
