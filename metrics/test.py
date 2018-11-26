@@ -17,3 +17,13 @@ if __name__ == "__main__":
     print(decide_which_bleu(h1, 5, ))
     print(decide_which_bleu([], 3, 'individual'))
     print(decide_which_bleu([], 3, ))
+
+    # test cal_bleu function
+    print(cal_bleu(h1,[r1], 1, 'individual'))
+    print(cal_bleu(h1,[r1], 1, ))
+    print(cal_bleu(h1,[r1], 2, 'individual'))
+    print(cal_bleu(h1,[r1], 2, ))
+    print(cal_bleu(h2,[r2], 1, 'individual'))
+    print(cal_bleu(h2,[r2], 1, ))
+    print(cal_bleu(h2,[r2], 2, 'individual'))
+    print(cal_bleu(h2,[r2], 2, ))

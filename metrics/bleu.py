@@ -2,16 +2,21 @@
 
 import numpy as np
 from nltk.translate.bleu_score import sentence_bleu
+from nltk.translate.bleu_score import SmoothingFunction
 
 
 def cal_bleu(hypothesis, \
             references, \
             n_gram=4, \
             individual_or_cumulative='cumulative', \
-            smoothing_function=chencherry.method1):
+            smoothing_function=None):
     '''
     smoothing_function==chencherry.method1 or None
     '''
+    # smooth function
+    if smoothing_function=='method1':
+        cc = SmoothingFunction()
+        smoothing_function=cc.method1
     # get weight
     weight = decide_which_bleu(hypothesis, n_gram, individual_or_cumulative)
     # calculate bleu score
