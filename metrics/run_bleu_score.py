@@ -21,10 +21,29 @@ def read_config(file_path):
 
 def run(config):
     #
-    type_seq2seq = config['type']
+    type_seq2seq = config['model']['type']
+    val_or_test = config['test_type']
     # read file
-    r = open(config[])
+    with open(config['file_dir'][type_seq2seq][val_or_test], 'w') as re:
+        count_of_sent = 0
+        sum_score = 0
+        for line in re:
+            # split input output and maybe person label
+            collect = line.split('\t')
+            input_sent = collect[0]
+            reference_sent = collect[1]
+            if type_seq2seq == 'personal':
+                personal_label = collect[2]
+            # get model output
+            #TODO
+            # calculate bleu score for this sentence
+            score = cal_bleu(hypothesis, [reference], n_gram, individual_or_cumulative, smoothing_function)
+            if score != -1:
+                sum_score = sum_score + score
+                count_of_sent += 1
 
+            average_bleu = sum_score / count_of_sent
+            return average_bleu
 
 if __name__ == '__main__':
     config = read_config('config.json')
