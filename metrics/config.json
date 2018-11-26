@@ -1,7 +1,9 @@
 {
     "file_dir":{
-        "general": ,
-        "personal": ,
+        "general_valid": "../src/data/general_data/val.txt",
+        "general_test": "../src/data/general_data/test.txt",
+        "personal_valid": "../src/data/persona_data/val.txt",
+        "personal_test": "../src/data/persona_data/test.txt"
     },
     "model":{},
     "bleu":{},
