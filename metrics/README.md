@@ -1,6 +1,8 @@
 # Evaluation Part
 
-1. First run `python3 split_data.py` in src/data to get splited train/val/test data.
+## 1. 
+
+First run `python3 split_data.py` in src/data to get splited train/val/test data.
 
 the data sets are stored in general_data directory and persona_data directory
 
@@ -10,4 +12,6 @@ you can see the readme in /src/data to get more details.
 
 Then can use val/test data to calculate BLEU score.
 
-2. Run `python3 run_bleu_score.py` to calculate BLEU score.
+## 2. 
+
+Run `python3 run_bleu_score.py` to calculate BLEU score.
