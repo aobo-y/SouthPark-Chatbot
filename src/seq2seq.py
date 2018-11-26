@@ -22,7 +22,7 @@ def maskNLLLoss(inp, target, mask):
     return loss, n_total.mean()
 
 
-def train(word_map, input_variable, lengths, target_variable, mask, max_target_len, speaker_input,
+def train(word_map, input_variable, lengths, target_variable, mask, max_target_len, speaker_variable,
           encoder, decoder, encoder_optimizer, decoder_optimizer, batch_size):
     # Zero gradients
     encoder_optimizer.zero_grad()
@@ -33,7 +33,7 @@ def train(word_map, input_variable, lengths, target_variable, mask, max_target_l
     lengths = lengths.to(device)
     target_variable = target_variable.to(device)
     mask = mask.to(device)
-    speaker_input = speaker_input.to(device)
+    speaker_variable = speaker_variable.to(device)
 
     # Initialize variables
     loss = 0.
@@ -56,7 +56,7 @@ def train(word_map, input_variable, lengths, target_variable, mask, max_target_l
 
     # Forward batch of sequences through decoder one time step at a time
     for t in range(max_target_len):
-        decoder_output, decoder_hidden = decoder(decoder_input, speaker_input, decoder_hidden, encoder_outputs)
+        decoder_output, decoder_hidden = decoder(decoder_input, speaker_variable, decoder_hidden, encoder_outputs)
 
         if use_teacher_forcing:
             # Teacher forcing: next input is current target
@@ -112,10 +112,10 @@ def trainIters(word_map, person_map, pairs, encoder, decoder, encoder_optimizer,
     for iteration in range(start_iteration, n_iteration + 1):
         training_batch = training_batches[iteration - 1]
         # extract fields from batch
-        input_variable, lengths, target_variable, mask, max_target_len, speaker_input = training_batch
+        input_variable, lengths, target_variable, mask, max_target_len, speaker_variable = training_batch
 
         # run a training iteration with batch
-        loss = train(word_map, input_variable, lengths, target_variable, mask, max_target_len, speaker_input,
+        loss = train(word_map, input_variable, lengths, target_variable, mask, max_target_len, speaker_variable,
                      encoder, decoder, encoder_optimizer, decoder_optimizer, batch_size)
         print_loss += loss
 
