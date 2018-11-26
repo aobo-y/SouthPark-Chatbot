@@ -1,10 +1,19 @@
 {
+    "type": "test",
+    
     "file_dir":{
-        "general_valid": "../src/data/general_data/val.txt",
-        "general_test": "../src/data/general_data/test.txt",
-        "personal_valid": "../src/data/persona_data/val.txt",
-        "personal_test": "../src/data/persona_data/test.txt"
+        "general":{
+            "valid": "../src/data/general_data/val.txt",
+            "test": "../src/data/general_data/test.txt"
+        },
+        "personal":{
+            "valid": "../src/data/persona_data/val.txt",
+            "test": "../src/data/persona_data/test.txt"
+        }
     },
-    "model":{},
-    "bleu":{},
+    "model":{
+        "type": "general"
+
+    },
+    "bleu":{}
 }
