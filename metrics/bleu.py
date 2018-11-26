@@ -44,3 +44,7 @@ if __name__ == "__main__":
     print(decide_which_bleu(h1, 2, ))
     print(decide_which_bleu(h1, 3, 'individual'))
     print(decide_which_bleu(h1, 3, ))
+    print(decide_which_bleu(h1, 5, 'individual'))
+    print(decide_which_bleu(h1, 5, ))
+    print(decide_which_bleu([], 3, 'individual'))
+    print(decide_which_bleu([], 3, ))
