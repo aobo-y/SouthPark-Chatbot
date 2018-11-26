@@ -7,7 +7,7 @@ import random
 import torch
 import config
 
-from data_util import batch2TrainData
+from data_util import batch2TrainData, data_2_indexes
 
 USE_CUDA = torch.cuda.is_available()
 device = torch.device("cuda" if USE_CUDA else "cpu")
@@ -96,10 +96,13 @@ def trainIters(word_map, person_map, pairs, encoder, decoder, encoder_optimizer,
     After loading a checkpoint, we will be able to use the model parameters to run inference,
     or we can continue training right where we left off.
     """
+    # convert sentence & speaker name to indexes
+    index_pair = [data_2_indexes(pair, word_map, person_map) for pair in pairs]
+
     batch_size = config.BATCH_SIZE
 
     # Load batches for each iteration
-    training_batches = [batch2TrainData([random.choice(pairs) for _ in range(batch_size)], word_map, person_map)
+    training_batches = [batch2TrainData([random.choice(index_pair) for _ in range(batch_size)], word_map)
                         for _ in range(n_iteration)]
 
     # Initializations

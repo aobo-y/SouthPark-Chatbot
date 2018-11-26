@@ -82,7 +82,7 @@ def readVocs(datafile):
 
 
 # Returns True iff both sentences in a pair 'p' are under the MAX_LENGTH threshold
-def filterPair(p):
+def filter_pair(p):
     # Input sequences need to preserve the last word for EOS token
     if len(p) == 3 and config.USE_PERSONA:
         return len(p[0].split(' ')) < config.MAX_LENGTH and len(p[1].split(' ')) < config.MAX_LENGTH and len(p[2]) > 1
@@ -104,7 +104,7 @@ def load_pairs(datafile):
     pairs = [[normalizeString(s) for s in l.split('\t')] for l in lines]
 
     print("Read {!s} sentence pairs".format(len(pairs)))
-    pairs = [pair for pair in pairs if filterPair(pair)]
+    pairs = [pair for pair in pairs if filter_pair(pair)]
     print("Trimmed to {!s} sentence pairs".format(len(pairs)))
 
     return pairs
@@ -136,7 +136,7 @@ def trimRareWords(word_map, pairs):
     print("Trimmed from {} pairs to {}, {:.4f} of total".format(len(pairs), len(keep_pairs), len(keep_pairs) / len(pairs)))
     return keep_pairs
 
-def indexes_from_sentence(word_map, sentence):
+def indexes_from_sentence(sentence, word_map):
     unk = config.SPECIAL_WORD_EMBEDDING_TOKENS['UNK']
     eos = config.SPECIAL_WORD_EMBEDDING_TOKENS['EOS']
 
@@ -161,23 +161,21 @@ def binaryMatrix(l, fillvalue):
     return m
 
 # Returns padded input sequence tensor and lengths
-def input_var(l, word_map):
+def input_var(input_batch, word_map):
     pad = config.SPECIAL_WORD_EMBEDDING_TOKENS['PAD']
     fillvalue = word_map.get_index(pad)
 
-    indexes_batch = [indexes_from_sentence(word_map, sentence) for sentence in l]
-    lengths = torch.tensor([len(indexes) for indexes in indexes_batch])
-    pad_list = zeroPadding(indexes_batch, fillvalue)
+    lengths = torch.tensor([len(indexes) for indexes in input_batch])
+    pad_list = zeroPadding(input_batch, fillvalue)
 
     pad_var = torch.LongTensor(pad_list)
     return pad_var, lengths
 
 # Returns padded target sequence tensor, padding mask, and max target length
-def output_var(l, word_map):
+def output_var(indexes_batch, word_map):
     pad = config.SPECIAL_WORD_EMBEDDING_TOKENS['PAD']
     fillvalue = word_map.get_index(pad)
 
-    indexes_batch = [indexes_from_sentence(word_map, sentence) for sentence in l]
     max_target_len = max([len(indexes) for indexes in indexes_batch])
     pad_list = zeroPadding(indexes_batch, fillvalue)
     mask = binaryMatrix(pad_list, fillvalue)
@@ -186,29 +184,28 @@ def output_var(l, word_map):
     pad_var = torch.LongTensor(pad_list)
     return pad_var, mask, max_target_len
 
-# Return speaker_ids tensor with shape=(max_length, 1, batch_size)
-def speaker_var(speaker_batch, person_map):
-    indexes_batch = [person_map.get_index(speaker) for speaker in speaker_batch]
-
-    return torch.LongTensor([indexes_batch]) # decoder need length as first dimension
-
-
 # Returns all items for a given batch of pairs
-def batch2TrainData(pair_batch, word_map, person_map):
-    pair_batch.sort(key=lambda x: len(x[0].split(" ")), reverse=True)
-    input_batch, output_batch, speaker_batch = [], [], []
+def batch2TrainData(pair_batch, word_map):
+    # sort by input length, no idea why
+    pair_batch.sort(key=lambda x: len(x[0]), reverse=True)
 
-    for pair in pair_batch:
-        input_batch.append(pair[0])
-        output_batch.append(pair[1])
-
-        if len(pair) == 3 and config.USE_PERSONA:
-            speaker_batch.append(pair[2])
-        elif config.USE_PERSONA is not True:
-            speaker_batch.append(config.NONE_PERSONA)
+    input_batch = [pair[0] for pair in pair_batch]
+    output_batch = [pair[1] for pair in pair_batch]
+    speaker_batch = [pair[2] for pair in pair_batch]
 
     inp, lengths = input_var(input_batch, word_map)
     output, mask, max_target_len = output_var(output_batch, word_map)
 
-    speaker_input = speaker_var(speaker_batch, person_map)
+    # Return speaker_input tensor with shape=(1, batch_size)
+    speaker_input = torch.LongTensor([speaker_batch])
     return inp, lengths, output, mask, max_target_len, speaker_input
+
+
+def data_2_indexes(pair, word_map, person_map):
+    speaker = pair[2] if len(pair) == 3 and config.USE_PERSONA else config.NONE_PERSONA
+
+    return [
+        indexes_from_sentence(pair[0], word_map),
+        indexes_from_sentence(pair[1], word_map),
+        person_map.get_index(speaker)
+    ]
