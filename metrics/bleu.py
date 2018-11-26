@@ -4,8 +4,21 @@ import numpy as np
 from nltk.translate.bleu_score import sentence_bleu
 
 
-def cal_bleu(hypothesis, references, weights, n_gram, individual_or_cumulative):
-    pass
+def cal_bleu(hypothesis, \
+            references, \
+            n_gram=4, \
+            individual_or_cumulative='cumulative', \
+            smoothing_function=chencherry.method1):
+    '''
+    smoothing_function==chencherry.method1 or None
+    '''
+    # get weight
+    weight = decide_which_bleu(hypothesis, n_gram, individual_or_cumulative)
+    # calculate bleu score
+    score = sentence_bleu(references, hypothesis, weight, smoothing_function)
+
+    return score
+
 
 def decide_which_bleu(hypothesis, \
                       n_gram=4, \
