@@ -72,6 +72,8 @@ def build_model(load_checkpoint=config.LOAD_CHECKPOINT):
         load_filename = os.path.join(config.SAVE_DIR, config.MODEL_NAME, config.CORPUS_NAME_PRETRAIN,
                                 f'{config.ENCODER_N_LAYERS}-{config.DECODER_N_LAYERS}_{config.HIDDEN_SIZE}',
                                 f'{config.CHECKPOINT_ITER}_checkpoint.tar')
+
+        print('Load checkpoint file:', load_filename)
         # If loading on same machine the model was trained on
         checkpoint = torch.load(load_filename)
 
@@ -109,9 +111,6 @@ def build_model(load_checkpoint=config.LOAD_CHECKPOINT):
     assert embedding.embedding_dim == config.HIDDEN_SIZE
     assert personas.embedding_dim == config.PERSONA_SIZE
 
-
-    pairs = load_data(config.CORPUS_NAME, config.CORPUS_FILE, word_map)
-
     print('Building encoder and decoder ...')
 
     # Initialize encoder & decoder models
@@ -127,7 +126,7 @@ def build_model(load_checkpoint=config.LOAD_CHECKPOINT):
     encoder = encoder.to(device)
     decoder = decoder.to(device)
 
-    return pairs, encoder, decoder, embedding, personas, word_map, person_map, current_iteration, checkpoint
+    return encoder, decoder, embedding, personas, word_map, person_map, current_iteration, checkpoint
 
 
 
@@ -174,10 +173,13 @@ def main():
     args = parser.parse_args()
 
     if args.mode == 'train':
-        pairs, encoder, decoder, embedding, personas, word_map, person_map, current_iteration, checkpoint = build_model()
+        encoder, decoder, embedding, personas, word_map, person_map, current_iteration, checkpoint = build_model()
+
+        pairs = load_data(config.CORPUS_NAME, config.CORPUS_FILE, word_map)
+
         train(pairs, encoder, decoder, embedding, personas, word_map, person_map, current_iteration, checkpoint)
     elif args.mode == 'chat':
-        pairs, encoder, decoder, embedding, personas, word_map, person_map, _, _ = build_model(load_checkpoint=True)
+        encoder, decoder, embedding, personas, word_map, person_map, _, _ = build_model(load_checkpoint=True)
 
         speaker_name = args.speaker
         if person_map.has(speaker_name):

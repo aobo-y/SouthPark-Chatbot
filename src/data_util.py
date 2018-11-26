@@ -63,6 +63,7 @@ def load_pairs(datafile):
 def trimRareWords(word_map, pairs):
     # Filter out pairs with trimmed words
     keep_pairs = []
+    nword = set()
     for pair in pairs:
         input_sentence = pair[0]
         output_sentence = pair[1]
@@ -70,18 +71,21 @@ def trimRareWords(word_map, pairs):
         keep_output = True
         # Check input sentence
         for word in input_sentence.split(' '):
-            if word_map.has(word):
+            if not word_map.has(word):
+                nword.add(word)
                 keep_input = False
                 break
         # Check output sentence
         for word in output_sentence.split(' '):
-            if word_map.has(word):
+            if not word_map.has(word):
+                nword.add(word)
                 keep_output = False
                 break
 
         # Only keep pairs that do not contain trimmed word(s) in their input or output sentence
         if keep_input and keep_output:
             keep_pairs.append(pair)
+    print(nword)
 
     print("Trimmed from {} pairs to {}, {:.4f} of total".format(len(pairs), len(keep_pairs), len(keep_pairs) / len(pairs)))
     return keep_pairs
