@@ -40,16 +40,21 @@ def load_model(configs):
         searcher = BeamSearchDecoder(encoder, decoder)
 
     speaker = voc.people2index[configs['model']['speaker_name']]
-    return search, voc, speaker
+    return searcher, voc, speaker
 
 def run(configs):
-    #
+    # configs
     type_seq2seq = configs['model']['type']
     val_or_test = configs['test_type']
+    n_gram = configs['bleu']['n_gram']
+    individual_or_cumulative = configs['bleu']['individual_or_cumulative']
+    smoothing_function = configs['bleu']['smoothing_function']
     # load model
-    search, voc, speaker = load_model(configs)
+    searcher, voc, speaker = load_model(configs)
     # read file
-    with open(configs['file_dir'][type_seq2seq][val_or_test], 'w') as re:
+    file_path = configs['file_dir'][type_seq2seq][val_or_test]
+    print(file_path)
+    with open(file_path, 'r') as re:
         count_of_sent = 0
         sum_score = 0
         for line in re:
@@ -60,9 +65,11 @@ def run(configs):
             if type_seq2seq == 'personal':
                 personal_label = collect[2]
             # get model output
-
+            out = evaluate.evaluate(searcher, voc, input_sent, speaker)
+            out[:] = [x for x in out if not (x=='EOS' or x=='PAD')]
             # make tokens
-
+            hypothesis = make_tokens(' '.join(out))
+            reference = make_tokens(reference_sent)
             # calculate bleu score for this sentence
             score = cal_bleu(hypothesis, [reference], n_gram, individual_or_cumulative, smoothing_function)
             if score != -1:
@@ -74,4 +81,5 @@ def run(configs):
 
 if __name__ == '__main__':
     configs = read_config('config.json')
-    run(configs)
+    average_bleu = run(configs)
+    print(average_bleu)
