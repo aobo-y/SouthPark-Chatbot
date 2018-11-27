@@ -12,7 +12,9 @@
         }
     },
     "model":{
-        "type": "general"
+        "type": "personal",
+        "speaker_name": "cartman",
+        "search_method": "greedy"
 
     },
     "bleu":{}

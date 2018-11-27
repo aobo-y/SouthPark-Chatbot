@@ -2,6 +2,18 @@ from six import text_type
 from nltk.tokenize import word_tokenize
 import string
 import json
+import sys
+import os
+sys.path.insert(0, '../src/')
+import chatbot
+import evaluate
+from search_decoder import GreedySearchDecoder, BeamSearchDecoder
+
+if not os.path.exists('checkpoints'):
+    os.symlink('../src/checkpoints', 'checkpoints')
+if not os.path.exists('data'):
+    os.symlink('../src/data', 'data')
+
 
 def make_tokens(sentence):
     # tokenize
@@ -19,10 +31,23 @@ def read_config(file_path):
     json_ob = json.load(open(file_path,'r'))
     return json_ob
 
+def load_model(configs):
+    voc, pairs, encoder, decoder, load_filename, encoder_optimizer_sd, decoder_optimizer_sd, embedding, personas = chatbot.build_model(load_checkpoint=True)
+
+    if configs['model']['search_method']=='greedy':
+        searcher = GreedySearchDecoder(encoder, decoder)
+    elif configs['model']['search_method']=='beam':
+        searcher = BeamSearchDecoder(encoder, decoder)
+
+    speaker = voc.people2index[configs['model']['speaker_name']]
+    return search, voc, speaker
+
 def run(configs):
     #
     type_seq2seq = configs['model']['type']
     val_or_test = configs['test_type']
+    # load model
+    search, voc, speaker = load_model(configs)
     # read file
     with open(configs['file_dir'][type_seq2seq][val_or_test], 'w') as re:
         count_of_sent = 0
@@ -35,7 +60,9 @@ def run(configs):
             if type_seq2seq == 'personal':
                 personal_label = collect[2]
             # get model output
-            #TODO
+
+            # make tokens
+
             # calculate bleu score for this sentence
             score = cal_bleu(hypothesis, [reference], n_gram, individual_or_cumulative, smoothing_function)
             if score != -1:
