@@ -46,7 +46,7 @@ def init_word_embedding(embedding_paths):
             embedding_of_words.append([0] * embedding_len)
 
     weight = torch.FloatTensor(embedding_of_words)
-    embedding = torch.nn.Embedding.from_pretrained(weight)
+    embedding = torch.nn.Embedding.from_pretrained(weight, False)
 
     return word_map, embedding
 
