@@ -17,5 +17,9 @@
         "search_method": "greedy"
 
     },
-    "bleu":{}
+    "bleu":{
+        "n_gram": 2,
+        "individual_or_cumulative": "cumulative",
+        "smoothing_function": "None"
+    }
 }
