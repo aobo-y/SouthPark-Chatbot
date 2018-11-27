@@ -23,9 +23,11 @@ class EncoderRNN(nn.Module):
                         shape=(n_layers x num_directions, batch_size, hidden_size)
     """
 
-    def __init__(self, hidden_size, embedding, n_layers=1, dropout=0.5):
+    def __init__(self, embedding, n_layers=1, dropout=0.5):
         super(EncoderRNN, self).__init__()
         self.n_layers = n_layers
+
+        hidden_size = embedding.embedding_dim
         self.hidden_size = hidden_size
         self.embedding = embedding
 

@@ -2,7 +2,7 @@
 
 # Corpus information
 # different mode: general_data/persona_data
-DATA_MODE = 'general_data'  
+DATA_MODE = 'general_data'
 # pretrain on cornell movie and south park general
 if DATA_MODE == 'general_data':
     CORPUS_NAME = "general_data"
@@ -14,26 +14,39 @@ if DATA_MODE == 'persona_data':
     CORPUS_NAME_PRETRAIN = "general_data"
     CORPUS_FILE = "train.txt"
 
+# Word Embedding
+WORD_EMBEDDING_FILES = [
+    'data/word_embedding/filtered.glove.42B.300d.part1.txt',
+    'data/word_embedding/filtered.glove.42B.300d.part2.txt'
+]
+
 
 # Parameters for processing the dataset
 MAX_LENGTH = 20  # Maximum sentence length to consider
 MIN_COUNT = 3    # Minimum word count threshold for trimming
-PAD_TOKEN = 0    # Padding token id
-SOS_TOKEN = 1    # Start of Sentence token id
-EOS_TOKEN = 2    # End of Sentence token id
-UNK_TOKEN = 3    # Unknown token id
 
+SPECIAL_WORD_EMBEDDING_TOKENS = {
+    'PAD': '<pad>', # Padding token
+    'SOS': '<sos>', # Start of Sentence token
+    'EOS': '<eos>', # End of Sentence token
+    'UNK': '<unk>' # pretrained word embedding usually has this
+}
+
+PERSONS = ['kyle', 'cartman', 'stan', 'chef', 'kenny', 'mr . garrison'
+           'randy', 'sharon', 'gerald', 'butters']
+
+NONE_PERSONA = '<none>'
 
 # Configure models
 SAVE_DIR = 'checkpoints'
 MODEL_NAME = 'dwy_persona_based'
-N_ITER = 4000                # training iterations 
+N_ITER = 4000                # training iterations
 LOAD_CHECKPOINT = False      # whether to load checkpoint, if true, need to set CHECKPOINT_ITER
 CHECKPOINT_ITER = 4000        # where to continue training
 ATTN_MODEL = 'dot'           # type of the attention model: dot/general/concat
 TRAIN_EMBEDDING = True       # whether to update the word embeddding during training
 USE_PERSONA = False          # whether to update the persona embedding during training
-HIDDEN_SIZE = 500            # size of the word embedding & number of hidden units in GRU
+HIDDEN_SIZE = 300            # size of the word embedding & number of hidden units in GRU
 PERSONA_SIZE = 100           # size of the persona embedding
 ENCODER_N_LAYERS = 2         # number of layers in bi-GRU encoder
 DECODER_N_LAYERS = 2         # number of layers in GRU decoder
