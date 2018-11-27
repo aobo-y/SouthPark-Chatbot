@@ -17,31 +17,36 @@ from seq2seq import trainIters
 from evaluate import evaluateInput
 from embedding_map import EmbeddingMap
 
-
+DIR_PATH = os.path.dirname(__file__)
 USE_CUDA = torch.cuda.is_available()
 device = torch.device("cuda" if USE_CUDA else "cpu")
 
-def init_word_embedding(embedding_path):
-    print('Init word embedding from', embedding_path)
-    embedding_path = os.path.join('./', embedding_path)
-    with open(embedding_path, encoding='utf-8') as file:
-        lines = file.read().strip().split('\n')
-        tokens_of_lines = [l.strip().split(' ') for l in lines]
-        words = [l[0] for l in tokens_of_lines]
-        embedding_of_words = [[float(str_emb) for str_emb in l[1:]] for l in tokens_of_lines]
+def init_word_embedding(embedding_paths):
+    print('Init word embedding from: ', ', '.join(embedding_paths))
 
-        word_map = EmbeddingMap(words)
-        print(f'Load {word_map.size()} word embedding')
+    lines = []
+    for embedding_path in embedding_paths:
+        embedding_path = os.path.join(DIR_PATH, embedding_path)
 
-        for special_token in config.SPECIAL_WORD_EMBEDDING_TOKENS.values():
-            if not word_map.has(special_token):
-                word_map.append(special_token)
-                # also init the embedding for special token
-                embedding_len = len(embedding_of_words[0])
-                embedding_of_words.append([0] * embedding_len)
+        with open(embedding_path, encoding='utf-8') as file:
+            lines += file.read().strip().split('\n')
 
-        weight = torch.FloatTensor(embedding_of_words)
-        embedding = torch.nn.Embedding.from_pretrained(weight)
+    tokens_of_lines = [l.strip().split(' ') for l in lines]
+    words = [l[0] for l in tokens_of_lines]
+    embedding_of_words = [[float(str_emb) for str_emb in l[1:]] for l in tokens_of_lines]
+
+    word_map = EmbeddingMap(words)
+    print(f'Load {word_map.size()} word embedding')
+
+    for special_token in config.SPECIAL_WORD_EMBEDDING_TOKENS.values():
+        if not word_map.has(special_token):
+            word_map.append(special_token)
+            # also init the embedding for special token
+            embedding_len = len(embedding_of_words[0])
+            embedding_of_words.append([0] * embedding_len)
+
+    weight = torch.FloatTensor(embedding_of_words)
+    embedding = torch.nn.Embedding.from_pretrained(weight)
 
     return word_map, embedding
 
@@ -100,7 +105,7 @@ def build_model(load_checkpoint=config.LOAD_CHECKPOINT):
         current_iteration = 0
 
         # Initialize word embeddings
-        word_map, embedding = init_word_embedding(config.WORD_EMBEDDING_FILE)
+        word_map, embedding = init_word_embedding(config.WORD_EMBEDDING_FILES)
 
         # Initialize persona embedding
         person_map, personas = init_persona_embedding(config.PERSONS, config.PERSONA_SIZE)

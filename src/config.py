@@ -15,7 +15,10 @@ if DATA_MODE == 'persona_data':
     CORPUS_FILE = "train.txt"
 
 # Word Embedding
-WORD_EMBEDDING_FILE = 'data/word_embeddings/glove.6B.50d.test.txt'
+WORD_EMBEDDING_FILES = [
+    'data/word_embedding/filtered.glove.42B.300d.part1.txt',
+    'data/word_embedding/filtered.glove.42B.300d.part2.txt'
+]
 
 
 # Parameters for processing the dataset

@@ -10,19 +10,19 @@ import re
 import numpy as np
 
 
-D_NAME = os.path.dirname(__file__)
+DIR_PATH = os.path.dirname(__file__)
 
 GLOVE_WE_URL = 'http://nlp.stanford.edu/data/wordvecs/glove.42B.300d.zip'
 
-WE_FOLDER = os.path.join(D_NAME, 'word_embedding')
+WE_FOLDER = os.path.join(DIR_PATH, 'word_embedding')
 ZIP_FILE = os.path.join(WE_FOLDER, 'glove.42B.300d.zip')
 WE_FILE = os.path.join(WE_FOLDER, 'glove.42B.300d.txt')
 # WE_FILE = os.path.join(WE_FOLDER, 'glove.6B.300d.txt')
 
 CORPUS_FILES = [
-    os.path.join(D_NAME, 'cornell_movie_dialogs/formatted_movie_lines.txt'),
-    os.path.join(D_NAME, 'south_park/general_train.txt'),
-    os.path.join(D_NAME, 'south_park/fine_tune.txt'),
+    os.path.join(DIR_PATH, 'cornell_movie_dialogs/formatted_movie_lines.txt'),
+    os.path.join(DIR_PATH, 'south_park/general_train.txt'),
+    os.path.join(DIR_PATH, 'south_park/fine_tune.txt'),
 ]
 
 OUTPUT_FILES = [
