@@ -12,6 +12,13 @@ you can see the readme in /src/data to get more details.
 
 Then can use val/test data to calculate BLEU score.
 
-## 2. 
+
+## 2.
+
+In python command, Run 
+>>> import nltk
+>>> nltk.download('punkt')
+
+## 3.
 
 Run `python3 run_bleu_score.py` to calculate BLEU score.
