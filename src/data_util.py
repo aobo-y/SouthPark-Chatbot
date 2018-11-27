@@ -18,6 +18,9 @@ def normalizeString(s):
     # remove extra leading & ending space
     return s.strip()
 
+def normalize_name(s):
+    return s.lower()
+
 def unicodeToAscii(s):
     return ''.join(
         c for c in unicodedata.normalize('NFD', s)
@@ -55,8 +58,15 @@ def load_pairs(datafile):
     with open(datafile, encoding='utf-8') as f:
         lines = f.read().strip().split('\n')
 
-    # Split every line into pairs and normalize
-    pairs = [[normalizeString(s) for s in l.split('\t')] for l in lines]
+    # Split every line into pairs
+    pairs = [[s for s in l.split('\t')] for l in lines]
+
+    # normalize
+    for pair in pairs:
+        pair[0] = normalizeString(pair[0])
+        pair[1] = normalizeString(pair[1])
+        if len(pair) == 3:
+            pair[2] = normalize_name(pair[2])
 
     print("Read {!s} sentence pairs".format(len(pairs)))
     pairs = [pair for pair in pairs if filter_pair(pair)]
