@@ -6,6 +6,7 @@ import sys
 import os
 sys.path.insert(0, '../src/')
 import chatbot
+import bleu
 import evaluate
 from search_decoder import GreedySearchDecoder, BeamSearchDecoder
 
@@ -49,11 +50,13 @@ def run(configs):
     n_gram = configs['bleu']['n_gram']
     individual_or_cumulative = configs['bleu']['individual_or_cumulative']
     smoothing_function = configs['bleu']['smoothing_function']
+    if smoothing_function == "None":
+        smoothing_function = None
     # load model
     searcher, voc, speaker = load_model(configs)
     # read file
     file_path = configs['file_dir'][type_seq2seq][val_or_test]
-    print(file_path)
+    #print(file_path)
     with open(file_path, 'r') as re:
         count_of_sent = 0
         sum_score = 0
@@ -69,15 +72,18 @@ def run(configs):
             out[:] = [x for x in out if not (x=='EOS' or x=='PAD')]
             # make tokens
             hypothesis = make_tokens(' '.join(out))
+            #print(hypothesis)
             reference = make_tokens(reference_sent)
             # calculate bleu score for this sentence
-            score = cal_bleu(hypothesis, [reference], n_gram, individual_or_cumulative, smoothing_function)
+            score = bleu.cal_bleu(hypothesis, [reference], n_gram, individual_or_cumulative, smoothing_function)
+            print(score)
+            print(count_of_sent)
             if score != -1:
                 sum_score = sum_score + score
                 count_of_sent += 1
 
-            average_bleu = sum_score / count_of_sent
-            return average_bleu
+        average_bleu = sum_score / count_of_sent
+        return average_bleu
 
 if __name__ == '__main__':
     configs = read_config('config.json')
