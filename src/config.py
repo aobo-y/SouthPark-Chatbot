@@ -32,7 +32,7 @@ SPECIAL_WORD_EMBEDDING_TOKENS = {
     'UNK': '<unk>' # pretrained word embedding usually has this
 }
 
-PERSONS = ['kyle', 'cartman', 'stan', 'chef', 'kenny', 'mr . garrison',
+PERSONS = ['kyle', 'cartman', 'stan', 'chef', 'kenny', 'mr. garrison',
            'randy', 'sharon', 'gerald', 'butters']
 
 NONE_PERSONA = '<none>'
