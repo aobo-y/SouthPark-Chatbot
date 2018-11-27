@@ -28,7 +28,7 @@ def split_persona_data(input_file, split_ratio, use_shuffle):
     with open(input_file, 'r', encoding='utf8') as f:
         lines = f.read().strip().split('\n')
     print(f'Read {len(lines)} sentences from {input_file}.')
-    
+
     person_train = []
     person_val = []
     person_test = []
@@ -44,22 +44,22 @@ def split_persona_data(input_file, split_ratio, use_shuffle):
         person_val += person_sents[train_len:train_len+val_len]
         person_test += person_sents[train_len+val_len:]
     return person_train, person_val, person_test
-        
+
 
 if __name__=='__main__':
     # generate cornell data
-    cornell_train, cornell_val, cornell_test = split_general_data('cornell movie-dialogs corpus/formatted_movie_lines.txt',
+    cornell_train, cornell_val, cornell_test = split_general_data('cornell_movie_dialogs/formatted_movie_lines.txt',
                                                                     0.1, True)
-    
+
     # generate south_park general data
     sp_general_train, sp_general_val, sp_general_test = split_general_data('south_park/general_train.txt', 0.1, True)
-    
+
     # generate south_park fine tune data
     sp_person_train, sp_person_val, sp_person_test = split_persona_data('south_park/fine_tune.txt', 0.1, True)
-    
+
     # generate simpsons fine tune data
     # simp_person_train, simp_person_val, simp_person_test = split_persona_data('simpsons/fine_tune.txt', 0.1, True)
-    
+
     # combine general data
     if not os.path.exists('general_data'):
         os.mkdir('general_data')
@@ -78,11 +78,11 @@ if __name__=='__main__':
         print(f'Write {len(general_test)} sentences into general_test.')
         for l in general_test:
             f.write(l+'\n')
-        
+
     # combine persona data
     if not os.path.exists('persona_data'):
         os.mkdir('persona_data')
-    
+
     with open('persona_data/train.txt', 'w', encoding='utf8') as f:
         print(f'Write {len(sp_person_train)} sentences into persona_train.')
         for l in sp_person_train:
