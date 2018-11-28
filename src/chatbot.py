@@ -172,7 +172,7 @@ def chat(encoder, decoder, word_map, speaker_id):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--mode', choices={'train', 'chat'}, default='chat', help="mode. if not specified, it's in the train mode")
+    parser.add_argument('--mode', choices={'train', 'chat'}, default='train', help="mode. if not specified, it's in the train mode")
     parser.add_argument('--speaker', default='<none>')
     args = parser.parse_args()
 
