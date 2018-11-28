@@ -56,7 +56,7 @@ def init_persona_embedding(persons, size):
 
     # Initialize persona embedding with 0
     weight = torch.FloatTensor(np.zeros((person_map.size(), size)))
-    embedding = torch.nn.Embedding.from_pretrained(weight)
+    embedding = torch.nn.Embedding.from_pretrained(weight, False)
 
     return person_map, embedding
 
