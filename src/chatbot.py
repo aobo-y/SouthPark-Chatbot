@@ -80,11 +80,12 @@ def build_model(load_checkpoint=config.LOAD_CHECKPOINT):
 
         print('Load checkpoint file:', load_filename)
         # If loading on same machine the model was trained on
-        checkpoint = torch.load(load_filename)
+        # checkpoint = torch.load(load_filename)
 
-        current_iteration = checkpoint['iteration']
+        # current_iteration = checkpoint['iteration']
         # If loading a model trained on GPU to CPU
-        #checkpoint = torch.load(load_filename, map_location=torch.device('cpu'))
+        checkpoint = torch.load(load_filename, map_location=torch.device('cpu'))
+        current_iteration = checkpoint['iteration']
         embedding_sd = checkpoint['embedding']
         persona_sd = checkpoint['persona']
 
