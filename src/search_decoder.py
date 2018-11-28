@@ -6,7 +6,6 @@ that we use during training when we are NOT using teacher forcing.
 import operator
 import torch
 from torch import nn
-import torch.nn.functional as F
 from queue import PriorityQueue
 import config
 
@@ -29,12 +28,17 @@ class GreedySearchDecoder(nn.Module):
         super(GreedySearchDecoder, self).__init__()
         self.encoder = encoder
         self.decoder = decoder
+        self.use_lstm = config.USE_LSTM
 
     def forward(self, input_seq, input_length, speaker_id, sos, eos):
         # Forward input through encoder model
         encoder_outputs, encoder_hidden = self.encoder(input_seq, input_length)
         # Prepare encoder's final hidden layer to be first hidden input to the decoder
-        decoder_hidden = encoder_hidden[:self.decoder.n_layers]
+        if self.use_lstm:
+            decoder_hidden = (encoder_hidden[0][:self.decoder.n_layers],  # hidden state
+                              encoder_hidden[1][:self.decoder.n_layers])  # cell state
+        else:
+            decoder_hidden = encoder_hidden[:self.decoder.n_layers]
         # Initialize decoder input with SOS_token
         decoder_input = torch.ones(1, 1, device=device, dtype=torch.long) * sos
         # Initialize tensors to append decoded words to
@@ -74,6 +78,7 @@ class BeamSearchDecoder(nn.Module):
         self.encoder = encoder
         self.decoder = decoder
         self.beam_width = config.BEAM_WIDTH
+        self.use_lstm = config.USE_LSTM
 
     class BeamSearchNode(object):
         def __init__(self, hiddenstate, previousNode, wordId, logProb, length):
@@ -96,7 +101,11 @@ class BeamSearchDecoder(nn.Module):
         batch_size = 1 # TODO: don't know how to calculate
         for _ in range(batch_size):
             encoder_outputs, encoder_hidden = self.encoder(input_seq, input_length)
-            decoder_hidden = encoder_hidden[:self.decoder.n_layers]
+            if self.use_lstm:
+                decoder_hidden = (encoder_hidden[0][:self.decoder.n_layers],   # hidden state
+                                  encoder_hidden[1][:self.decoder.n_layers])   # cell state
+            else:
+                decoder_hidden = encoder_hidden[:self.decoder.n_layers]
 
             # Start with the start of the sentence token
             decoder_input = torch.ones(1, 1, device=device, dtype=torch.long) * sos
