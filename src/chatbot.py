@@ -6,7 +6,6 @@ import os
 import argparse
 import torch
 from torch import optim
-import numpy as np
 
 import config
 from data_util import trimRareWords, load_pairs
@@ -55,7 +54,7 @@ def init_persona_embedding(persons, size):
     person_map.append(config.NONE_PERSONA)
 
     # Initialize persona embedding with 0
-    weight = torch.FloatTensor(np.zeros((person_map.size(), size)))
+    weight = torch.zeros((person_map.size(), size))
     embedding = torch.nn.Embedding.from_pretrained(weight, False)
 
     return person_map, embedding
@@ -119,9 +118,9 @@ def build_model(load_checkpoint=config.LOAD_CHECKPOINT):
     print('Building encoder and decoder ...')
 
     # Initialize encoder & decoder models
-    encoder = EncoderRNN(embedding, config.ENCODER_N_LAYERS, config.ENCODER_DROPOUT_RATE)
+    encoder = EncoderRNN(embedding, config.ENCODER_N_LAYERS, config.ENCODER_DROPOUT_RATE, config.USE_LSTM)
     decoder = DecoderRNN(config.ATTN_MODEL, embedding, personas, word_map.size(),
-                         config.DECODER_N_LAYERS, config.DECODER_DROPOUT_RATE, use_persona=config.USE_PERSONA)
+                         config.DECODER_N_LAYERS, config.DECODER_DROPOUT_RATE, config.USE_PERSONA, config.USE_LSTM)
 
     if checkpoint:
         encoder.load_state_dict(checkpoint['en'])
