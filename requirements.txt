@@ -1,6 +1,5 @@
 Flask==1.0.2
 numpy==1.15.2
 scipy==0.19.0
-python==3.6.5
 torch==0.4.1
 python-telegram-bot==11.1.0

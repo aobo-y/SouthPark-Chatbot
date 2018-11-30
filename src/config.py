@@ -40,7 +40,7 @@ NONE_PERSONA = '<none>'
 # Configure models
 SAVE_DIR = 'checkpoints'
 MODEL_NAME = 'dwy_persona_based'
-N_ITER = 4000                # training iterations
+N_ITER = 10000               # training iterations
 LOAD_CHECKPOINT = False      # whether to load checkpoint, if true, need to set CHECKPOINT_ITER
 CHECKPOINT_ITER = 100000        # where to continue training
 ATTN_MODEL = 'dot'           # type of the attention model: dot/general/concat

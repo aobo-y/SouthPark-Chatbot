@@ -23,21 +23,27 @@ class EncoderRNN(nn.Module):
                         shape=(n_layers x num_directions, batch_size, hidden_size)
     """
 
-    def __init__(self, embedding, n_layers=1, dropout=0.5):
+    def __init__(self, embedding, n_layers=1, dropout=0.5, use_lstm=False):
         super(EncoderRNN, self).__init__()
         self.n_layers = n_layers
 
         hidden_size = embedding.embedding_dim
         self.hidden_size = hidden_size
         self.embedding = embedding
-
-        # Initialize GRU:
+        self.use_lstm = use_lstm
+        
+        # Initialize GRU/LSTM:
         # a) the input_size and hidden_size params are both set to 'hidden_size'
         #        because our input size is a word embedding with number of features == hidden_size
-        # b) use bidirectional GRU to capture context words
-        self.gru = nn.GRU(hidden_size, hidden_size, n_layers,
-                          dropout=(0 if n_layers == 1 else dropout),
-                          bidirectional=True)
+        # b) use bidirectional GRU/LSTM to capture context words
+        if use_lstm:
+            self.encoder = nn.LSTM(hidden_size, hidden_size, n_layers, 
+                                   dropout=(0 if n_layers == 1 else dropout),
+                                   bidirectional=True)
+        else:
+            self.encoder = nn.GRU(hidden_size, hidden_size, n_layers,
+                              dropout=(0 if n_layers == 1 else dropout),
+                              bidirectional=True)
 
     def forward(self, input_seq, input_length, hidden=None):
         # Convert word indexes to embeddings
@@ -49,7 +55,7 @@ class EncoderRNN(nn.Module):
         # Forward pass through GRU
         # outputs shape = (max_length, batch_size, hidden_size*num_directions)
         # hidden shape = (n_layers*num_directions, batch_size, hidden_size)
-        outputs, hidden = self.gru(packed, hidden)
+        outputs, hidden = self.encoder(packed, hidden)
         # Unpack padding
         # shape = (max_length, batch_size, hidden_size*num_directions)
         outputs, _ = torch.nn.utils.rnn.pad_packed_sequence(outputs)
