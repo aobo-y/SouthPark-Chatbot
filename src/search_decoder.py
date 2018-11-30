@@ -100,7 +100,11 @@ class BeamSearchDecoder(nn.Module):
         topk = config.BEAM_CANDIDATE_NUM 
         # decoding goes sentence by sentence
         encoder_outputs, encoder_hidden = self.encoder(input_seq, input_length)
-        decoder_hidden = encoder_hidden[:self.decoder.n_layers]
+        if self.use_lstm:
+            decoder_hidden = (encoder_hidden[0][:self.decoder.n_layers],   # hidden state
+                              encoder_hidden[1][:self.decoder.n_layers])   # cell state
+        else:
+            decoder_hidden = encoder_hidden[:self.decoder.n_layers]
 
         # Start with the start of the sentence token
         decoder_input = torch.ones(1, 1, device=device, dtype=torch.long) * sos
@@ -178,6 +182,8 @@ class BeamSearchDecoder(nn.Module):
         all_tokens.append(tokens[::-1][1:])
         all_scores.append(scores[::-1][1:])
         idx = self.random_pick(len(all_tokens))
+        print(all_tokens)
+        print(len(all_tokens))
         return all_tokens[idx], all_scores[idx]
 
     def random_pick(self, num):
