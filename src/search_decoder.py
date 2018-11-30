@@ -122,8 +122,6 @@ class BeamSearchDecoder(nn.Module):
         qsize = 1
 
         # start beam search
-        all_tokens = []
-        all_scores = []
         while True:
             # give up when decoding takes too long
             if qsize > 2000: break
@@ -171,16 +169,18 @@ class BeamSearchDecoder(nn.Module):
             endnodes = [nodes.get() for _ in range(topk)]
 
         # Record token and score
-        tokens = []
-        scores = []
+        all_tokens = []
+        all_scores = []
         for score, n in sorted(endnodes, key=operator.itemgetter(0)):
             # back trace
+            tokens = []
+            scores = []
             while n.prevNode != None:
                 n = n.prevNode
                 tokens.append(n.wordid)
                 scores.append(n.logp)
-        all_tokens.append(tokens[::-1][1:])
-        all_scores.append(scores[::-1][1:])
+            all_tokens.append(tokens[::-1][1:])
+            all_scores.append(scores[::-1][1:])
         idx = self.random_pick(len(all_tokens))
         print(all_tokens)
         print(len(all_tokens))
