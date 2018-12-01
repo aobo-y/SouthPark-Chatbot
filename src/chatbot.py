@@ -15,6 +15,7 @@ from seq_decoder_persona import DecoderRNN
 from seq2seq import trainIters
 from evaluate import evaluateInput
 from embedding_map import EmbeddingMap
+import telegram
 
 DIR_PATH = os.path.dirname(__file__)
 USE_CUDA = torch.cuda.is_available()
@@ -193,6 +194,23 @@ def main():
             chat(encoder, decoder, word_map, speaker_id)
         else:
             print('Invalid speaker. Possible speakers:', person_map.tokens)
+
+def telegram_init(speaker_name):
+    config.USE_PERSONA = True
+    encoder, decoder, embedding, personas, word_map, person_map, _, _ = build_model(load_checkpoint=True)
+    if person_map.has(speaker_name):
+        print('Selected speaker:', speaker_name)
+        speaker_id = person_map.get_index(speaker_name)
+        # Set dropout layers to eval mode
+        encoder.eval()
+        decoder.eval()
+        # Initialize search module
+        if config.BEAM_SEARCH_ON:
+            searcher = BeamSearchDecoder(encoder, decoder)
+        else:
+            searcher = GreedySearchDecoder(encoder, decoder)
+        return searcher, word_map, speaker_id
+
 
 if __name__ =='__main__':
     main()

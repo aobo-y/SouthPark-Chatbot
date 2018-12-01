@@ -55,5 +55,6 @@ def evaluateExample(sentence, searcher, word_map, speaker_id):
     # evaluate sentence
     output_words = evaluate(searcher, word_map, input_sentence, speaker_id)
     output_words = [x for x in output_words if x not in config.SPECIAL_WORD_EMBEDDING_TOKENS.values()]
-
-    print('Bot:', ' '.join(output_words))
+    res = ' '.join(output_words)
+    print('Bot:', res)
+    return res
