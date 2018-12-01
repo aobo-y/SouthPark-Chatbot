@@ -97,7 +97,7 @@ def train(word_map, input_variable, lengths, target_variable, mask, max_target_l
 
 
 def trainIters(word_map, person_map, pairs, encoder, decoder, encoder_optimizer, decoder_optimizer,
-               embedding, personas, n_iteration, corpus_name, start_iteration):
+               embedding, personas, n_iteration, start_iteration):
     """
     When we save our model, we save a tarball containing the encoder and decoder state_dicts (parameters),
     the optimizers’ state_dicts, the loss, the iteration, etc.
@@ -135,10 +135,11 @@ def trainIters(word_map, person_map, pairs, encoder, decoder, encoder_optimizer,
 
         # Save checkpoint
         if iteration % config.SAVE_EVERY == 0:
-            directory = os.path.join(config.SAVE_DIR, config.MODEL_NAME, corpus_name, '{}-{}_{}'.format(config.ENCODER_N_LAYERS, config.DECODER_N_LAYERS, config.HIDDEN_SIZE))
+            directory = os.path.join(config.SAVE_DIR, config.MODEL_NAME, '{}-{}_{}'.format(config.ENCODER_N_LAYERS, config.DECODER_N_LAYERS, config.HIDDEN_SIZE))
             if not os.path.exists(directory):
                 os.makedirs(directory)
 
+            filepath = os.path.join(directory, f'{config.TRAIN_MODE}_{iteration}.tar')
             torch.save({
                 'iteration': iteration,
                 'en': encoder.state_dict(),
@@ -150,4 +151,4 @@ def trainIters(word_map, person_map, pairs, encoder, decoder, encoder_optimizer,
                 'person_map_dict': person_map.__dict__,
                 'embedding': embedding.state_dict(),
                 'persona': personas.state_dict(),
-            }, os.path.join(directory, '{}_{}.tar'.format(iteration, 'checkpoint')))
+            }, filepath)

@@ -22,7 +22,7 @@ The model can restore the previously trained weights and continue training up on
 
 ```bash
 cd src
-python3 chatbot.py --mode train
+python3 chatbot.py --mode=train --checkpoint=1000
 ```
 
 ## Chat
@@ -31,7 +31,7 @@ Start the command line interaction with the chat bot.
 
 ```bash
 cd src
-python3 chatbot.py --mode chat --speaker cartman
+python3 chatbot.py --mode=chat --checkpoint=1000 --speaker=cartman
 ```
 
 ## Config
@@ -43,7 +43,6 @@ Parameters | Description
 DATA_MODE | choose which data set to train on: general_data/persona_data
 MAX_LENGTH | maximum sentence length to consider
 N_ITER | training iterations
-LOAD_CHECKPOINT | whether to load the checkpoints, if true, need to set CHECKPOINT_ITER
 RNN_TYPE | model of encoder & decode, support `LSTM` & `GRU`
 ATTN_MODEL | type of the attention model: dot/general/concat
 TRAIN_EMBEDDING | whether to update the word embeddding during training
