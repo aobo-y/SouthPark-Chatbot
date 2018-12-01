@@ -70,13 +70,11 @@ def load_data(corpus_name, corpus_file, word_map):
 
 
 
-def build_model(load_checkpoint=config.LOAD_CHECKPOINT):
+def build_model(checkpoint_name):
     checkpoint = None
 
-    if load_checkpoint:
-        load_filename = os.path.join(config.SAVE_DIR, config.MODEL_NAME, config.CORPUS_NAME_PRETRAIN,
-                                f'{config.ENCODER_N_LAYERS}-{config.DECODER_N_LAYERS}_{config.HIDDEN_SIZE}',
-                                f'{config.CHECKPOINT_ITER}_checkpoint.tar')
+    if checkpoint_name:
+        load_filename = os.path.join(config.SAVE_DIR, config.MODEL_NAME, f'{config.ENCODER_N_LAYERS}-{config.DECODER_N_LAYERS}_{config.HIDDEN_SIZE}', f'{checkpoint_name}.tar')
 
         print('Load checkpoint file:', load_filename)
         # If loading on same machine the model was trained on
@@ -84,8 +82,7 @@ def build_model(load_checkpoint=config.LOAD_CHECKPOINT):
 
         # current_iteration = checkpoint['iteration']
         # If loading a model trained on GPU to CPU
-        checkpoint = torch.load(load_filename, map_location=torch.device('cpu'))
-        current_iteration = checkpoint['iteration']
+        checkpoint = torch.load(load_filename, map_location=device)
         embedding_sd = checkpoint['embedding']
         persona_sd = checkpoint['persona']
 
@@ -103,8 +100,6 @@ def build_model(load_checkpoint=config.LOAD_CHECKPOINT):
         personas.load_state_dict(persona_sd)
 
     else:
-        current_iteration = 0
-
         # Initialize word embeddings
         word_map, embedding = init_word_embedding(config.WORD_EMBEDDING_FILES)
 
@@ -132,11 +127,11 @@ def build_model(load_checkpoint=config.LOAD_CHECKPOINT):
     encoder = encoder.to(device)
     decoder = decoder.to(device)
 
-    return encoder, decoder, embedding, personas, word_map, person_map, current_iteration, checkpoint
+    return encoder, decoder, embedding, personas, word_map, person_map, checkpoint
 
 
 
-def train(pairs, encoder, decoder, embedding, personas, word_map, person_map, current_iteration, checkpoint):
+def train(pairs, encoder, decoder, embedding, personas, word_map, person_map, checkpoint):
     # Ensure dropout layers are in train mode
     encoder.train()
     decoder.train()
@@ -146,15 +141,18 @@ def train(pairs, encoder, decoder, embedding, personas, word_map, person_map, cu
     encoder_optimizer = optim.Adam(encoder.parameters(), lr=config.LR)
     decoder_optimizer = optim.Adam(decoder.parameters(), lr=config.LR * config.DECODER_LR)
 
+    iteration = 0
+
     if checkpoint:
         encoder_optimizer.load_state_dict(checkpoint['en_opt'])
         decoder_optimizer.load_state_dict(checkpoint['de_opt'])
+        iteration = checkpoint['iteration']
 
     # Run training iterations
-    iteration = current_iteration + 1
+    iteration += 1
     print(f'Starting Training from iteration {iteration}!')
     trainIters(word_map, person_map, pairs, encoder, decoder, encoder_optimizer, decoder_optimizer,
-               embedding, personas, config.N_ITER, config.CORPUS_NAME, iteration)
+               embedding, personas, config.N_ITER, iteration)
 
 
 def chat(encoder, decoder, word_map, speaker_id):
@@ -176,16 +174,17 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--mode', choices={'train', 'chat'}, default='train', help="mode. if not specified, it's in the train mode")
     parser.add_argument('--speaker', default='<none>')
+    parser.add_argument('--checkpoint')
     args = parser.parse_args()
 
     if args.mode == 'train':
-        encoder, decoder, embedding, personas, word_map, person_map, current_iteration, checkpoint = build_model()
+        encoder, decoder, embedding, personas, word_map, person_map, checkpoint = build_model(args.checkpoint)
 
         pairs = load_data(config.CORPUS_NAME, config.CORPUS_FILE, word_map)
 
-        train(pairs, encoder, decoder, embedding, personas, word_map, person_map, current_iteration, checkpoint)
+        train(pairs, encoder, decoder, embedding, personas, word_map, person_map, checkpoint)
     elif args.mode == 'chat':
-        encoder, decoder, embedding, personas, word_map, person_map, _, _ = build_model(load_checkpoint=True)
+        encoder, decoder, embedding, personas, word_map, person_map, _ = build_model(args.checkpoint)
 
         speaker_name = args.speaker
         if person_map.has(speaker_name):
