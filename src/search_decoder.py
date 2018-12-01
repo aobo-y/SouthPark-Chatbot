@@ -182,8 +182,6 @@ class BeamSearchDecoder(nn.Module):
             all_tokens.append(tokens[::-1][1:])
             all_scores.append(scores[::-1][1:])
         idx = self.random_pick(len(all_tokens))
-        print(all_tokens)
-        print(len(all_tokens))
         return all_tokens[idx], all_scores[idx]
 
     def random_pick(self, num):
