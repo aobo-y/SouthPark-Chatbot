@@ -22,7 +22,7 @@ The model can restore the previously trained weights and continue training up on
 
 ```bash
 cd src
-python3 chatbot.py --mode train
+python3 chatbot.py --mode=train --checkpoint=1000
 ```
 
 ## Chat
@@ -31,7 +31,7 @@ Start the command line interaction with the chat bot.
 
 ```bash
 cd src
-python3 chatbot.py --mode chat --speaker cartman
+python3 chatbot.py --mode=chat --checkpoint=1000 --speaker=cartman
 ```
 
 ## Config

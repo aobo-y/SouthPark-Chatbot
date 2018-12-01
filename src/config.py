@@ -20,8 +20,6 @@ else:
 SAVE_DIR = 'checkpoints'
 MODEL_NAME = 'dwy_persona_based'
 N_ITER = 150 * 10 ** 3               # training iterations
-LOAD_CHECKPOINT = False      # whether to load checkpoint, if true, need to set CHECKPOINT_ITER
-CHECKPOINT_ITER = 100000        # where to continue training
 
 # Configure models - chat relevant
 BEAM_SEARCH_ON = True       # use Beam Search or Greedy Search
