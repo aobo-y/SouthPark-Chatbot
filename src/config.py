@@ -6,13 +6,11 @@ TRAIN_MODE = 'pretrain'
 if TRAIN_MODE == 'fine_tune':
     # fine tune on south park persona
     CORPUS_NAME = "persona_data"
-    CORPUS_NAME_PRETRAIN = "general_data"
     CORPUS_FILE = "train.txt"
     USE_PERSONA = True          # whether to update the persona embedding during training
 else:
     # pretrain on cornell movie and south park general
     CORPUS_NAME = "general_data"
-    CORPUS_NAME_PRETRAIN = "general_data"
     CORPUS_FILE = "train.txt"
     USE_PERSONA = False         # whether to update the persona embedding during training
 

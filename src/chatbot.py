@@ -73,9 +73,7 @@ def build_model(checkpoint_iter):
     checkpoint = None
 
     if checkpoint_iter:
-        load_filename = os.path.join(config.SAVE_DIR, config.MODEL_NAME, config.CORPUS_NAME_PRETRAIN,
-                                f'{config.ENCODER_N_LAYERS}-{config.DECODER_N_LAYERS}_{config.HIDDEN_SIZE}',
-                                f'{checkpoint_iter}_checkpoint.tar')
+        load_filename = os.path.join(config.SAVE_DIR, config.MODEL_NAME, f'{config.ENCODER_N_LAYERS}-{config.DECODER_N_LAYERS}_{config.HIDDEN_SIZE}', f'{checkpoint_iter}_checkpoint.tar')
 
         print('Load checkpoint file:', load_filename)
         # If loading on same machine the model was trained on
@@ -83,7 +81,7 @@ def build_model(checkpoint_iter):
 
         # current_iteration = checkpoint['iteration']
         # If loading a model trained on GPU to CPU
-        checkpoint = torch.load(load_filename, map_location=torch.device('cpu'))
+        checkpoint = torch.load(load_filename, map_location=device)
         embedding_sd = checkpoint['embedding']
         persona_sd = checkpoint['persona']
 
