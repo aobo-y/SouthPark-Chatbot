@@ -30,13 +30,12 @@ class GreedySearchDecoder(nn.Module):
         super(GreedySearchDecoder, self).__init__()
         self.encoder = encoder
         self.decoder = decoder
-        self.use_lstm = config.USE_LSTM
 
     def forward(self, input_seq, input_length, speaker_id, sos, eos):
         # Forward input through encoder model
         encoder_outputs, encoder_hidden = self.encoder(input_seq, input_length)
         # Prepare encoder's final hidden layer to be first hidden input to the decoder
-        if self.use_lstm:
+        if config.RNN_TYPE == 'LSTM':
             decoder_hidden = (encoder_hidden[0][:self.decoder.n_layers],  # hidden state
                               encoder_hidden[1][:self.decoder.n_layers])  # cell state
         else:
@@ -80,7 +79,6 @@ class BeamSearchDecoder(nn.Module):
         self.encoder = encoder
         self.decoder = decoder
         self.beam_width = config.BEAM_WIDTH
-        self.use_lstm = config.USE_LSTM
 
     class BeamSearchNode(object):
         def __init__(self, hiddenstate, previousNode, wordId, logProb, length):
@@ -97,10 +95,10 @@ class BeamSearchDecoder(nn.Module):
 
     def forward(self, input_seq, input_length, speaker_id, sos, eos):
         # how many sentence do you want to generate
-        topk = config.BEAM_CANDIDATE_NUM 
+        topk = config.BEAM_CANDIDATE_NUM
         # decoding goes sentence by sentence
         encoder_outputs, encoder_hidden = self.encoder(input_seq, input_length)
-        if self.use_lstm:
+        if config.RNN_TYPE == 'LSTM':
             decoder_hidden = (encoder_hidden[0][:self.decoder.n_layers],   # hidden state
                               encoder_hidden[1][:self.decoder.n_layers])   # cell state
         else:

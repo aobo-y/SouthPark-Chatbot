@@ -23,21 +23,20 @@ class EncoderRNN(nn.Module):
                         shape=(n_layers x num_directions, batch_size, hidden_size)
     """
 
-    def __init__(self, embedding, n_layers=1, dropout=0.5, use_lstm=False):
+    def __init__(self, embedding, n_layers=1, dropout=0.5, rnn_type='GRU'):
         super(EncoderRNN, self).__init__()
         self.n_layers = n_layers
 
         hidden_size = embedding.embedding_dim
         self.hidden_size = hidden_size
         self.embedding = embedding
-        self.use_lstm = use_lstm
-        
+
         # Initialize GRU/LSTM:
         # a) the input_size and hidden_size params are both set to 'hidden_size'
         #        because our input size is a word embedding with number of features == hidden_size
         # b) use bidirectional GRU/LSTM to capture context words
-        if use_lstm:
-            self.encoder = nn.LSTM(hidden_size, hidden_size, n_layers, 
+        if rnn_type == 'LSTM':
+            self.encoder = nn.LSTM(hidden_size, hidden_size, n_layers,
                                    dropout=(0 if n_layers == 1 else dropout),
                                    bidirectional=True)
         else:
