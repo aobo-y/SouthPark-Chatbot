@@ -49,7 +49,7 @@ def train(word_map, input_variable, lengths, target_variable, mask, max_target_l
     decoder_input = decoder_input.to(device)
 
     # Set initial decoder hidden state to the encoder's final hidden state
-    if config.USE_LSTM:
+    if config.RNN_TYPE == 'LSTM':
         decoder_hidden = (encoder_hidden[0][:decoder.n_layers],   # hidden state
                           encoder_hidden[1][:decoder.n_layers])   # cell state
     else:

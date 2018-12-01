@@ -55,7 +55,7 @@ DECODER_DROPOUT_RATE = 0.1   # dropout rate in GRU decoder
 TEACHER_FORCING_RATIO = 1.0  # ratio for training decoder on ground truth or last output of decoder
 BEAM_SEARCH_ON = False       # use Beam Search or Greedy Search
 BEAM_WIDTH = 10              # size of beam
-USE_LSTM = True              # use LSTM or GRU as default RNN
+RNN_TYPE = 'LSTM'              # use LSTM or GRU as RNN
 
 # Configure training/optimization
 BATCH_SIZE = 64            # size of the mini batch in training state

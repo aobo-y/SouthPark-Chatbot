@@ -18,7 +18,7 @@ source server_env
 
 ## Train
 
-The model can restore the previously trained weights and continue training up on that. 
+The model can restore the previously trained weights and continue training up on that.
 
 ```bash
 cd src
@@ -45,6 +45,7 @@ MAX_LENGTH | maximum sentence length to consider
 MIN_COUNT | minimum word count threshold for trimming
 N_ITER | training iterations
 LOAD_CHECKPOINT | whether to load the checkpoints, if true, need to set CHECKPOINT_ITER
+RNN_TYPE | model of encoder & decode, support `LSTM` & `GRU`
 ATTN_MODEL | type of the attention model: dot/general/concat
 TRAIN_EMBEDDING | whether to update the word embeddding during training
 USE_PERSONA | whether to update the persona embedding during training

@@ -118,9 +118,9 @@ def build_model(load_checkpoint=config.LOAD_CHECKPOINT):
     print('Building encoder and decoder ...')
 
     # Initialize encoder & decoder models
-    encoder = EncoderRNN(embedding, config.ENCODER_N_LAYERS, config.ENCODER_DROPOUT_RATE, config.USE_LSTM)
+    encoder = EncoderRNN(embedding, config.ENCODER_N_LAYERS, config.ENCODER_DROPOUT_RATE, config.RNN_TYPE)
     decoder = DecoderRNN(config.ATTN_MODEL, embedding, personas, word_map.size(),
-                         config.DECODER_N_LAYERS, config.DECODER_DROPOUT_RATE, config.USE_PERSONA, config.USE_LSTM)
+                         config.DECODER_N_LAYERS, config.DECODER_DROPOUT_RATE, config.USE_PERSONA, config.RNN_TYPE)
 
     if checkpoint:
         encoder.load_state_dict(checkpoint['en'])
