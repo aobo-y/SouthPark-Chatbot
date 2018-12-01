@@ -3,6 +3,7 @@ Train seq2seq
 """
 
 import os
+import math
 import random
 import torch
 import config
@@ -11,6 +12,12 @@ from data_util import batch2TrainData, data_2_indexes
 
 USE_CUDA = torch.cuda.is_available()
 device = torch.device("cuda" if USE_CUDA else "cpu")
+
+# Inverse sigmoid decay
+def teacher_forcing_rate(idx):
+    k_factor = config.TF_RATE_DECAY_FACTOR
+    rate = k_factor / (k_factor + math.exp(idx / k_factor))
+    return rate
 
 def maskNLLLoss(inp, target, mask):
     # Calculate our loss based on our decoder’s output tensor, the target tensor,
@@ -23,7 +30,7 @@ def maskNLLLoss(inp, target, mask):
 
 
 def train(word_map, input_variable, lengths, target_variable, mask, max_target_len, speaker_variable,
-          encoder, decoder, encoder_optimizer, decoder_optimizer, batch_size):
+          encoder, decoder, encoder_optimizer, decoder_optimizer, batch_size, iteration):
     # Zero gradients
     encoder_optimizer.zero_grad()
     decoder_optimizer.zero_grad()
@@ -55,14 +62,11 @@ def train(word_map, input_variable, lengths, target_variable, mask, max_target_l
     else:
         decoder_hidden = encoder_hidden[:decoder.n_layers]
 
-    # Determine if we are using teacher forcing this iteration
-    use_teacher_forcing = True if random.random() < config.TEACHER_FORCING_RATIO else False
-
     # Forward batch of sequences through decoder one time step at a time
     for t in range(max_target_len):
         decoder_output, decoder_hidden = decoder(decoder_input, speaker_variable, decoder_hidden, encoder_outputs)
 
-        if use_teacher_forcing:
+        if random.random() < teacher_forcing_rate(iteration):
             # Teacher forcing: next input is current target
             decoder_input = target_variable[t].view(1, -1)
         else:
@@ -120,7 +124,7 @@ def trainIters(word_map, person_map, pairs, encoder, decoder, encoder_optimizer,
 
         # run a training iteration with batch
         loss = train(word_map, input_variable, lengths, target_variable, mask, max_target_len, speaker_variable,
-                     encoder, decoder, encoder_optimizer, decoder_optimizer, batch_size)
+                     encoder, decoder, encoder_optimizer, decoder_optimizer, batch_size, iteration)
         print_loss += loss
 
         # Print progress

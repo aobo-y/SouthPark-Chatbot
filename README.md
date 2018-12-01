@@ -58,3 +58,4 @@ DECODER_DROPOUT_RATE | dropout rate in GRU decoder
 TEACHER_FORCING_RATIO | the ratio that decoder learns from ground truth instead of last output
 LR | encoder learning rate
 DECODER_LR | decoder learning rate: LR*DECODER_LR
+TF_RATE_DECAY_FACTOR | k in the inverse sigmoid decay func of the teacher force rate
