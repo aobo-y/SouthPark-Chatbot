@@ -42,7 +42,6 @@ Parameters | Description
 -----|------
 DATA_MODE | choose which data set to train on: general_data/persona_data
 MAX_LENGTH | maximum sentence length to consider
-MIN_COUNT | minimum word count threshold for trimming
 N_ITER | training iterations
 LOAD_CHECKPOINT | whether to load the checkpoints, if true, need to set CHECKPOINT_ITER
 RNN_TYPE | model of encoder & decode, support `LSTM` & `GRU`

@@ -51,7 +51,6 @@ TF_RATE_DECAY_FACTOR = 15 * 10 ** 3      # k in the inverse sigmoid decay func o
 
 # Parameters for processing the dataset
 MAX_LENGTH = 20  # Maximum sentence length to consider
-MIN_COUNT = 3    # Minimum word count threshold for trimming
 
 SPECIAL_WORD_EMBEDDING_TOKENS = {
     'PAD': '<pad>', # Padding token
