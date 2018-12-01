@@ -139,6 +139,7 @@ def trainIters(word_map, person_map, pairs, encoder, decoder, encoder_optimizer,
             if not os.path.exists(directory):
                 os.makedirs(directory)
 
+            filepath = os.path.join(directory, f'{config.TRAIN_MODE}_{iteration}.tar')
             torch.save({
                 'iteration': iteration,
                 'en': encoder.state_dict(),
@@ -150,4 +151,4 @@ def trainIters(word_map, person_map, pairs, encoder, decoder, encoder_optimizer,
                 'person_map_dict': person_map.__dict__,
                 'embedding': embedding.state_dict(),
                 'persona': personas.state_dict(),
-            }, os.path.join(directory, '{}_{}.tar'.format(iteration, 'checkpoint')))
+            }, filepath)

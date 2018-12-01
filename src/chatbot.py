@@ -69,11 +69,11 @@ def load_data(corpus_name, corpus_file, word_map):
 
 
 
-def build_model(checkpoint_iter):
+def build_model(checkpoint_name):
     checkpoint = None
 
-    if checkpoint_iter:
-        load_filename = os.path.join(config.SAVE_DIR, config.MODEL_NAME, f'{config.ENCODER_N_LAYERS}-{config.DECODER_N_LAYERS}_{config.HIDDEN_SIZE}', f'{checkpoint_iter}_checkpoint.tar')
+    if checkpoint_name:
+        load_filename = os.path.join(config.SAVE_DIR, config.MODEL_NAME, f'{config.ENCODER_N_LAYERS}-{config.DECODER_N_LAYERS}_{config.HIDDEN_SIZE}', f'{checkpoint_name}.tar')
 
         print('Load checkpoint file:', load_filename)
         # If loading on same machine the model was trained on
@@ -151,7 +151,7 @@ def train(pairs, encoder, decoder, embedding, personas, word_map, person_map, ch
     iteration += 1
     print(f'Starting Training from iteration {iteration}!')
     trainIters(word_map, person_map, pairs, encoder, decoder, encoder_optimizer, decoder_optimizer,
-               embedding, personas, config.N_ITER, config.CORPUS_NAME, iteration)
+               embedding, personas, config.N_ITER, iteration)
 
 
 def chat(encoder, decoder, word_map, speaker_id):
