@@ -195,8 +195,11 @@ def main():
             print('Invalid speaker. Possible speakers:', person_map.tokens)
 
 def telegram_init(speaker_name):
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--checkpoint')
+    args = parser.parse_args()
     config.USE_PERSONA = True
-    encoder, decoder, embedding, personas, word_map, person_map, _, _ = build_model(load_checkpoint=True)
+    encoder, decoder, embedding, personas, word_map, person_map, _ = build_model(args.checkpoint)
     if person_map.has(speaker_name):
         print('Selected speaker:', speaker_name)
         speaker_id = person_map.get_index(speaker_name)
