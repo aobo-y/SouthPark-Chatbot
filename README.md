@@ -18,8 +18,7 @@ Pretrain the model with anonymous dialogues, which keeps the initial personas st
 The model can restore the previously trained weights and continue training up on that.
 
 ```bash
-cd src
-python3 chatbot.py --mode=pretrain
+python3 src/chatbot.py --mode=pretrain
 ```
 
 ### Finetune
@@ -28,7 +27,7 @@ Finetune the model with personalized dialogues, which aims to train the personas
 
 ```bash
 cd src
-python3 chatbot.py --mode=finetune --checkpoint=pretrain_1000
+python3 src/chatbot.py --mode=finetune --checkpoint=pretrain_1000
 ```
 
 ### Chat
@@ -37,7 +36,7 @@ Start the command line interaction with the chat bot.
 
 ```bash
 cd src
-python3 chatbot.py --mode=chat --checkpoint=1000 --speaker=cartman
+python3 src/chatbot.py --mode=chat --checkpoint=finetune_1000 --speaker=cartman
 ```
 
 ## Config

@@ -18,7 +18,7 @@ import telegram
 
 DIR_PATH = os.path.dirname(__file__)
 USE_CUDA = torch.cuda.is_available()
-device = torch.device("cuda" if USE_CUDA else "cpu")
+device = torch.device('cuda' if USE_CUDA else 'cpu')
 
 def init_word_embedding(embedding_paths):
     print('Init word embedding from: ', ', '.join(embedding_paths))
@@ -60,7 +60,7 @@ def init_persona_embedding(persons, size):
     return person_map, embedding
 
 def load_data(corpus_path, word_map, persona_map, trim=True):
-    datafile = os.path.join('data', corpus_path)
+    datafile = os.path.join(DIR_PATH, corpus_path)
     pairs = load_pairs(datafile)
 
     # Trim pairs with words not in embedding
@@ -72,7 +72,8 @@ def load_data(corpus_path, word_map, persona_map, trim=True):
 def load_checkpoint(filename):
     print('Load checkpoint file:', filename)
 
-    load_filepath = os.path.join(config.SAVE_DIR, config.MODEL_NAME, f'{config.ENCODER_N_LAYERS}-{config.DECODER_N_LAYERS}_{config.HIDDEN_SIZE}', f'{filename}.tar')
+    checkpoint_folder = os.path.join(DIR_PATH, config.SAVE_DIR, config.MODEL_NAME)
+    load_filepath = os.path.join(checkpoint_folder, f'{config.ENCODER_N_LAYERS}-{config.DECODER_N_LAYERS}_{config.HIDDEN_SIZE}', f'{filename}.tar')
 
     checkpoint = torch.load(load_filepath, map_location=device)
 

@@ -12,6 +12,8 @@ import config
 
 from data_util import batch2TrainData, data_2_indexes
 
+DIR_PATH = os.path.dirname(__file__)
+
 USE_CUDA = torch.cuda.is_available()
 DEVICE = torch.device("cuda" if USE_CUDA else "cpu")
 
@@ -186,7 +188,10 @@ class Trainer:
 
             # Save checkpoint
             if iteration % config.SAVE_EVERY == 0:
-                directory = os.path.join(config.SAVE_DIR, config.MODEL_NAME, '{}-{}_{}'.format(config.ENCODER_N_LAYERS, config.DECODER_N_LAYERS, config.HIDDEN_SIZE))
+                checkpoint_folder = os.path.join(DIR_PATH, config.SAVE_DIR, config.MODEL_NAME)
+
+                directory = os.path.join(checkpoint_folder, f'{config.ENCODER_N_LAYERS}-{config.DECODER_N_LAYERS}_{config.HIDDEN_SIZE}')
+
                 if not os.path.exists(directory):
                     os.makedirs(directory)
 
