@@ -62,6 +62,8 @@ class Trainer:
         self.encoder_optimizer.load_state_dict(checkpoint['en_opt'])
         self.decoder_optimizer.load_state_dict(checkpoint['de_opt'])
 
+    def reset_iter(self):
+        self.trained_iteration = 0
 
     def train_batch(self, training_batch, tf_rate=1):
         '''
@@ -143,7 +145,7 @@ class Trainer:
         return sum(print_loss) / n_totals
 
 
-    def train(self, pairs, n_iteration, batch_size=1):
+    def train(self, pairs, n_iteration, batch_size=1, stage=None):
         """
         When we save our model, we save a tarball containing the encoder and decoder state_dicts (parameters),
         the optimizers’ state_dicts, the loss, the iteration, etc.
@@ -188,12 +190,14 @@ class Trainer:
                 if not os.path.exists(directory):
                     os.makedirs(directory)
 
-                filename = f'{config.TRAIN_MODE}_{iteration}.tar'
+                filename = f'{stage}_{iteration}.tar'
+
                 filepath = os.path.join(directory, filename)
 
                 torch.save({
                     'iteration': iteration,
                     'loss': loss,
+                    'stage': stage,
                     'en': self.encoder.state_dict(),
                     'de': self.decoder.state_dict(),
                     'en_opt': self.encoder_optimizer.state_dict(),

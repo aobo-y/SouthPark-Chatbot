@@ -24,7 +24,7 @@ class DecoderRNN(nn.Module):
     """
 
     def __init__(self, attn_model, embedding, personas, output_size,
-                 n_layers=1, dropout=0.5, use_persona=True, rnn_type='GRU'):
+                 n_layers=1, dropout=0.5, rnn_type='GRU'):
         super(DecoderRNN, self).__init__()
         self.attn_model = attn_model
 
@@ -39,7 +39,7 @@ class DecoderRNN(nn.Module):
         self.embedding = embedding
         self.embedding_dropout = nn.Dropout(dropout)
         self.personas = personas
-        self.personas.weight.requires_grad = use_persona
+
         if rnn_type == 'LSTM':
             self.decoder = nn.LSTM(self.input_size, hidden_size, n_layers,
                                    dropout=(0 if n_layers == 1 else dropout))
