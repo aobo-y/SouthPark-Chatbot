@@ -150,7 +150,8 @@ def train(mode, encoder, decoder, embedding, personas, word_map, person_map, che
         n_iter = config.FINETUNE_N_ITER
 
         # finetune from pretrain checkpoint, reset start iter
-        if checkpoint['stage'] != 'finetune':
+        # verify stage keyword to make it compatible with previous
+        if 'stage' not in checkpoint or checkpoint['stage'] != 'finetune':
             trainer.reset_iter()
 
     pairs = load_data(corpus, word_map, person_map, trim_corpus)
