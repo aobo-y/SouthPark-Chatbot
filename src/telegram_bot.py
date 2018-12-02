@@ -20,7 +20,11 @@ class TeleBot:
         updater = Updater(token=self.token)
         dispatcher = updater.dispatcher
         def start(bot, update):
-            bot.send_message(chat_id=update.message.chat_id, text=f"Hi, I'm {self.speaker.capitalize()}!")
+            bot.send_message(chat_id=update.message.chat_id, text=evaluateExample(
+                    "", 
+                    searcher, 
+                    word_map, 
+                    speaker_id))
         start_handler = CommandHandler('start', start)
         dispatcher.add_handler(start_handler)
         def response(bot, update):
