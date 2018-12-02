@@ -26,7 +26,6 @@ python3 src/chatbot.py --mode=pretrain
 Finetune the model with personalized dialogues, which aims to train the personas.
 
 ```bash
-cd src
 python3 src/chatbot.py --mode=finetune --checkpoint=pretrain_1000
 ```
 
@@ -35,7 +34,6 @@ python3 src/chatbot.py --mode=finetune --checkpoint=pretrain_1000
 Start the command line interaction with the chat bot.
 
 ```bash
-cd src
 python3 src/chatbot.py --mode=chat --checkpoint=finetune_1000 --speaker=cartman
 ```
 
