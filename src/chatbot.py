@@ -7,7 +7,7 @@ import argparse
 import torch
 
 import config
-from data_util import trimRareWords, load_pairs
+from data_util import trim_unk_data, load_pairs
 from search_decoder import GreedySearchDecoder, BeamSearchDecoder
 from seq_encoder import EncoderRNN
 from seq_decoder_persona import DecoderRNN
@@ -59,29 +59,28 @@ def init_persona_embedding(persons, size):
 
     return person_map, embedding
 
-def load_data(corpus_name, corpus_file, word_map):
-    datafile = os.path.join('data', corpus_name, corpus_file)
+def load_data(corpus_path, word_map, persona_map, trim=True):
+    datafile = os.path.join('data', corpus_path)
     pairs = load_pairs(datafile)
 
     # Trim pairs with words not in embedding
-    pairs = trimRareWords(word_map, pairs)
+    if trim:
+        pairs = trim_unk_data(pairs, word_map, persona_map)
+
     return pairs
 
+def load_checkpoint(filename):
+    print('Load checkpoint file:', filename)
 
+    load_filepath = os.path.join(config.SAVE_DIR, config.MODEL_NAME, f'{config.ENCODER_N_LAYERS}-{config.DECODER_N_LAYERS}_{config.HIDDEN_SIZE}', f'{filename}.tar')
 
-def build_model(checkpoint_name):
-    checkpoint = None
+    checkpoint = torch.load(load_filepath, map_location=device)
 
-    if checkpoint_name:
-        load_filename = os.path.join(config.SAVE_DIR, config.MODEL_NAME, f'{config.ENCODER_N_LAYERS}-{config.DECODER_N_LAYERS}_{config.HIDDEN_SIZE}', f'{checkpoint_name}.tar')
+    # If loading a model trained on GPU to current Device
+    return checkpoint
 
-        print('Load checkpoint file:', load_filename)
-        # If loading on same machine the model was trained on
-        # checkpoint = torch.load(load_filename)
-
-        # current_iteration = checkpoint['iteration']
-        # If loading a model trained on GPU to CPU
-        checkpoint = torch.load(load_filename, map_location=device)
+def build_model(checkpoint):
+    if checkpoint:
         embedding_sd = checkpoint['embedding']
         persona_sd = checkpoint['persona']
 
@@ -116,7 +115,7 @@ def build_model(checkpoint_name):
     # Initialize encoder & decoder models
     encoder = EncoderRNN(embedding, config.ENCODER_N_LAYERS, config.ENCODER_DROPOUT_RATE, config.RNN_TYPE)
     decoder = DecoderRNN(config.ATTN_MODEL, embedding, personas, word_map.size(),
-                         config.DECODER_N_LAYERS, config.DECODER_DROPOUT_RATE, config.USE_PERSONA, config.RNN_TYPE)
+                         config.DECODER_N_LAYERS, config.DECODER_DROPOUT_RATE, config.RNN_TYPE)
 
     if checkpoint:
         encoder.load_state_dict(checkpoint['en'])
@@ -130,17 +129,42 @@ def build_model(checkpoint_name):
 
 
 
-def train(pairs, encoder, decoder, embedding, personas, word_map, person_map, checkpoint):
-    # Ensure dropout layers are in train mode
-    encoder.train()
-    decoder.train()
-
+def train(mode, encoder, decoder, embedding, personas, word_map, person_map, checkpoint):
     trainer = Trainer(encoder, decoder, word_map, person_map, embedding, personas)
 
     if checkpoint:
         trainer.load(checkpoint)
 
-    trainer.train(pairs, config.N_ITER, config.BATCH_SIZE)
+    if mode == 'pretrain':
+        corpus = config.PRETRAIN_CORPUS
+        trim_corpus = True
+        train_persona = False
+        n_iter = config.PRETRAIN_N_ITER
+
+    elif mode == 'finetune':
+        # finetune requires checkpoint
+        assert checkpoint is not None
+
+        corpus = config.FINETUNE_CORPUS
+        trim_corpus = False
+        train_persona = True
+        n_iter = config.FINETUNE_N_ITER
+
+        # finetune from pretrain checkpoint, reset start iter
+        # verify stage keyword to make it compatible with previous
+        if 'stage' not in checkpoint or checkpoint['stage'] != 'finetune':
+            trainer.reset_iter()
+
+    pairs = load_data(corpus, word_map, person_map, trim_corpus)
+
+    # Ensure dropout layers are in train mode
+    encoder.train()
+    decoder.train()
+
+    # in pretrain stage, do not update personas
+    personas.weight.requires_grad = train_persona
+
+    trainer.train(pairs, n_iter, config.BATCH_SIZE, stage=mode)
 
 
 def chat(encoder, decoder, word_map, speaker_id):
@@ -160,20 +184,19 @@ def chat(encoder, decoder, word_map, speaker_id):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--mode', choices={'train', 'chat'}, default='train', help="mode. if not specified, it's in the train mode")
+    parser.add_argument('--mode', choices={'pretrain', 'finetune', 'chat'}, help="mode to run the chatbot")
     parser.add_argument('--speaker', default='<none>')
     parser.add_argument('--checkpoint')
     args = parser.parse_args()
 
-    if args.mode == 'train':
-        encoder, decoder, embedding, personas, word_map, person_map, checkpoint = build_model(args.checkpoint)
+    checkpoint = None if not args.checkpoint else load_checkpoint(args.checkpoint)
 
-        pairs = load_data(config.CORPUS_NAME, config.CORPUS_FILE, word_map)
+    encoder, decoder, embedding, personas, word_map, person_map, checkpoint = build_model(checkpoint)
 
-        train(pairs, encoder, decoder, embedding, personas, word_map, person_map, checkpoint)
+    if args.mode == 'pretrain' or args.mode == 'finetune':
+        train(args.mode, encoder, decoder, embedding, personas, word_map, person_map, checkpoint)
+
     elif args.mode == 'chat':
-        encoder, decoder, embedding, personas, word_map, person_map, _ = build_model(args.checkpoint)
-
         speaker_name = args.speaker
         if person_map.has(speaker_name):
             print('Selected speaker:', speaker_name)

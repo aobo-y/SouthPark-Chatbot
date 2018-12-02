@@ -1,23 +1,16 @@
 # -*- coding: utf-8 -*-
 
-# Two train mode: pretrain / fine_tune
-TRAIN_MODE = 'pretrain'
-
-if TRAIN_MODE == 'fine_tune':
-    # fine tune on south park persona
-    CORPUS_NAME = "persona_data"
-    CORPUS_FILE = "train.txt"
-    USE_PERSONA = True          # whether to update the persona embedding during training
-else:
-    # pretrain on cornell movie and south park general
-    CORPUS_NAME = "general_data"
-    CORPUS_FILE = "train.txt"
-    USE_PERSONA = False         # whether to update the persona embedding during training
+# Corpus, path relateds to /src/data
+PRETRAIN_CORPUS = "general_data/train.txt"
+FINETUNE_CORPUS = "persona_data/train.txt"
 
 # checkpoints relevant
 SAVE_DIR = 'checkpoints'
 MODEL_NAME = 'dwy_persona_based'
-N_ITER = 150 * 10 ** 3               # training iterations
+
+# Iterations of training
+PRETRAIN_N_ITER = 150 * 10 ** 3
+FINETUNE_N_ITER = 15 * 10 ** 3
 
 # Configure models - chat relevant
 BEAM_SEARCH_ON = True       # use Beam Search or Greedy Search

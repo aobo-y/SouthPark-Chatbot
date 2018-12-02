@@ -42,6 +42,7 @@ def filter_pair(pair):
     '''
     Returns True iff both sentences in a pair 'p' are under the MAX_LENGTH threshold
     '''
+    # TODO: data contains garbage, pretrain data has 2 tab split
 
     if len(pair) <= 3 and len(pair) >= 2:
         return len(pair[0].split(' ')) < config.MAX_LENGTH and len(pair[1].split(' ')) < config.MAX_LENGTH
@@ -74,13 +75,14 @@ def load_pairs(datafile):
     return pairs
 
 
-def trimRareWords(word_map, pairs):
+def trim_unk_data(pairs, word_map, person_map):
     # Filter out pairs with trimmed words
     keep_pairs = []
 
     for pair in pairs:
         input_sentence = pair[0]
         output_sentence = pair[1]
+
         keep_input = True
         keep_output = True
         # Check input sentence
@@ -93,6 +95,11 @@ def trimRareWords(word_map, pairs):
             if not word_map.has(word):
                 keep_output = False
                 break
+
+        if len(pair) == 3:
+            speaker = pair[2]
+            if not person_map.has(speaker):
+                keep_output = False
 
         # Only keep pairs that do not contain trimmed word(s) in their input or output sentence
         if keep_input and keep_output:
