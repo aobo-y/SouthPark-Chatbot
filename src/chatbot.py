@@ -191,7 +191,7 @@ def main():
 
     encoder, decoder, embedding, personas, word_map, person_map, checkpoint = build_model(checkpoint)
 
-    if args.mode == 'pretrain' or args.mod == 'finetune':
+    if args.mode == 'pretrain' or args.mode == 'finetune':
         train(args.mode, encoder, decoder, embedding, personas, word_map, person_map, checkpoint)
 
     elif args.mode == 'chat':
