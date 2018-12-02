@@ -12,7 +12,7 @@ from data_util import trimRareWords, load_pairs
 from search_decoder import GreedySearchDecoder, BeamSearchDecoder
 from seq_encoder import EncoderRNN
 from seq_decoder_persona import DecoderRNN
-from seq2seq import trainIters
+from trainer import Trainer
 from evaluate import evaluateInput
 from embedding_map import EmbeddingMap
 
@@ -149,9 +149,10 @@ def train(pairs, encoder, decoder, embedding, personas, word_map, person_map, ch
 
     # Run training iterations
     iteration += 1
-    print(f'Starting Training from iteration {iteration}!')
-    trainIters(word_map, person_map, pairs, encoder, decoder, encoder_optimizer, decoder_optimizer,
-               embedding, personas, config.N_ITER, iteration)
+
+    trainer = Trainer(encoder, decoder, word_map, person_map, embedding, personas, encoder_optimizer, decoder_optimizer)
+
+    trainer.train(pairs, config.N_ITER, config.BATCH_SIZE, iteration)
 
 
 def chat(encoder, decoder, word_map, speaker_id):
