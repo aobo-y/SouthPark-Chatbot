@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# Corpus, path relateds to /src/data
-PRETRAIN_CORPUS = "general_data/train.txt"
-FINETUNE_CORPUS = "persona_data/train.txt"
+# Corpus, path relateds to /src
+PRETRAIN_CORPUS = "data/general_data/train.txt"
+FINETUNE_CORPUS = "data/persona_data/train.txt"
 
 # checkpoints relevant
 SAVE_DIR = 'checkpoints'
