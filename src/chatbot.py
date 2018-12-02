@@ -144,7 +144,7 @@ def train(mode, encoder, decoder, embedding, personas, word_map, person_map, che
         # finetune requires checkpoint
         assert checkpoint is not None
 
-        corpus = config.PRETRAIN_CORPUS
+        corpus = config.FINETUNE_CORPUS
         trim_corpus = False
         train_persona = True
         n_iter = config.FINETUNE_N_ITER
