@@ -5,14 +5,13 @@ SouthPark Chatbot
 import os
 import argparse
 import torch
-from torch import optim
 
 import config
 from data_util import trimRareWords, load_pairs
 from search_decoder import GreedySearchDecoder, BeamSearchDecoder
 from seq_encoder import EncoderRNN
 from seq_decoder_persona import DecoderRNN
-from seq2seq import trainIters
+from trainer import Trainer
 from evaluate import evaluateInput
 from embedding_map import EmbeddingMap
 import telegram
@@ -136,23 +135,12 @@ def train(pairs, encoder, decoder, embedding, personas, word_map, person_map, ch
     encoder.train()
     decoder.train()
 
-    # Initialize optimizers
-    print('Building optimizers ...')
-    encoder_optimizer = optim.Adam(encoder.parameters(), lr=config.LR)
-    decoder_optimizer = optim.Adam(decoder.parameters(), lr=config.LR * config.DECODER_LR)
-
-    iteration = 0
+    trainer = Trainer(encoder, decoder, word_map, person_map, embedding, personas)
 
     if checkpoint:
-        encoder_optimizer.load_state_dict(checkpoint['en_opt'])
-        decoder_optimizer.load_state_dict(checkpoint['de_opt'])
-        iteration = checkpoint['iteration']
+        trainer.load(checkpoint)
 
-    # Run training iterations
-    iteration += 1
-    print(f'Starting Training from iteration {iteration}!')
-    trainIters(word_map, person_map, pairs, encoder, decoder, encoder_optimizer, decoder_optimizer,
-               embedding, personas, config.N_ITER, iteration)
+    trainer.train(pairs, config.N_ITER, config.BATCH_SIZE)
 
 
 def chat(encoder, decoder, word_map, speaker_id):
