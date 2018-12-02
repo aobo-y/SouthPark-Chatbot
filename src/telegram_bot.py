@@ -7,7 +7,7 @@ speakers = {
     'stan': '797666745:AAG5L9qHQgQIERXFf47mD1QdatLEfXH0p2c',
     'kyle': '798154398:AAGHAUZ8l-Zi_bMr8KrRwkZ1svju1_fW2S8',
     'randy': '764465736:AAHeOYQMHStGNPZ1gNaPl2dZEiuorvBi_fI',
-    # 'none': '773092951:AAHMltKlernAmXHvO_TQ3B6mzkY1mv61rQc'
+    '<none>': '773092951:AAHMltKlernAmXHvO_TQ3B6mzkY1mv61rQc'
 }
 
 
@@ -40,8 +40,6 @@ if __name__ == '__main__':
     for speaker, token in speakers.items():
         bot = TeleBot(speaker, token)
         bot.run()
-
-# evaluateExample(sentence, searcher, word_map, speaker_id)
 
 
 
