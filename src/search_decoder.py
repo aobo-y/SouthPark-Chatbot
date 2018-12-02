@@ -177,8 +177,8 @@ class BeamSearchDecoder(nn.Module):
                 n = n.prevNode
                 tokens.append(n.wordid)
                 scores.append(n.logp)
-            all_tokens.append(tokens[::-1][1:])
-            all_scores.append(scores[::-1][1:])
+            all_tokens.append(tokens[::-1])
+            all_scores.append(scores[::-1])
         idx = self.random_pick(len(all_tokens))
         return all_tokens[idx], all_scores[idx]
 
