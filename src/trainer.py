@@ -179,7 +179,7 @@ class Trainer:
             # Print progress
             if iteration % config.PRINT_EVERY == 0:
                 print_loss_avg = print_loss / config.PRINT_EVERY
-                self.log('Iteration: {}; Percent complete: {:.1f}%; Average loss: {:.4f}'.format(iteration, iteration / n_iteration * 100, print_loss_avg))
+                self.log('Iter: {}; Percent: {:.1f}%; Avg loss: {:.4f}; TF rate: {:.4f}'.format(iteration, iteration / n_iteration * 100, print_loss_avg, tf_rate))
                 print_loss = 0
 
             # Save checkpoint
