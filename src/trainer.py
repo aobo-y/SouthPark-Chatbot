@@ -7,6 +7,7 @@ import math
 import random
 from datetime import datetime
 import torch
+from torch import optim
 import config
 
 from data_util import batch2TrainData, data_2_indexes
@@ -33,22 +34,44 @@ def mask_nll_loss(inp, target, mask):
 class Trainer:
     '''Trainer to train the seq2seq model'''
 
-    def __init__(self, encoder, decoder, word_map, person_map, embedding, personas, encoder_optimizer, decoder_optimizer):
+    def __init__(self, encoder, decoder, word_map, person_map, embedding, personas):
         self.encoder = encoder
         self.decoder = decoder
         self.word_map = word_map
         self.person_map = person_map
         self.embedding = embedding
         self.personas = personas
-        self.encoder_optimizer = encoder_optimizer
-        self.decoder_optimizer = decoder_optimizer
+
+        self.encoder_optimizer = optim.Adam(encoder.parameters(), lr=config.LR)
+        self.decoder_optimizer = optim.Adam(decoder.parameters(), lr=config.LR * config.DECODER_LR)
+
+        # trained iteration
+        self.trained_iteration = 0
 
     def log(self, string):
+        '''formatted log output for training'''
+
         time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         print(f'{time}\t{string}')
 
+    def load(self, checkpoint):
+        '''load checkpoint'''
+
+        self.trained_iteration = checkpoint['iteration']
+
+        self.encoder_optimizer.load_state_dict(checkpoint['en_opt'])
+        self.decoder_optimizer.load_state_dict(checkpoint['de_opt'])
+
 
     def train_batch(self, training_batch, tf_rate=1):
+        '''
+        train a batch of any batch size
+
+        Inputs:
+            training_batch: train data batch created by batch2TrainData
+            tf_rate: teacher forcing rate, the smaller the rate the higher the scheduled sampling
+        '''
+
         # extract fields from batch
         input_variable, lengths, target_variable, mask, max_target_len, speaker_variable = training_batch
 
@@ -117,10 +140,10 @@ class Trainer:
         self.encoder_optimizer.step()
         self.decoder_optimizer.step()
 
-        return sum(print_loss)/n_totals
+        return sum(print_loss) / n_totals
 
 
-    def train(self, pairs, n_iteration, batch_size=1, start_iteration=1):
+    def train(self, pairs, n_iteration, batch_size=1):
         """
         When we save our model, we save a tarball containing the encoder and decoder state_dicts (parameters),
         the optimizers’ state_dicts, the loss, the iteration, etc.
@@ -140,6 +163,9 @@ class Trainer:
         print_loss = 0
 
         # Training loop
+        start_iteration = self.trained_iteration + 1
+
+        self.log(f'Start training from iteration {start_iteration} to {n_iteration}...')
         for iteration in range(start_iteration, n_iteration + 1):
             training_batch = training_batches[iteration - 1]
 
@@ -147,6 +173,8 @@ class Trainer:
             # run a training iteration with batch
             loss = self.train_batch(training_batch, tf_rate)
             print_loss += loss
+
+            self.trained_iteration = iteration
 
             # Print progress
             if iteration % config.PRINT_EVERY == 0:
