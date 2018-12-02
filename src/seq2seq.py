@@ -5,6 +5,7 @@ Train seq2seq
 import os
 import math
 import random
+from datetime import datetime
 import torch
 import config
 
@@ -12,6 +13,10 @@ from data_util import batch2TrainData, data_2_indexes
 
 USE_CUDA = torch.cuda.is_available()
 device = torch.device("cuda" if USE_CUDA else "cpu")
+
+def training_log(string):
+    time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    print(f'{time}\t{string}')
 
 # Inverse sigmoid decay
 def teacher_forcing_rate(idx):
@@ -130,7 +135,7 @@ def trainIters(word_map, person_map, pairs, encoder, decoder, encoder_optimizer,
         # Print progress
         if iteration % config.PRINT_EVERY == 0:
             print_loss_avg = print_loss / config.PRINT_EVERY
-            print("Iteration: {}; Percent complete: {:.1f}%; Average loss: {:.4f}".format(iteration, iteration / n_iteration * 100, print_loss_avg))
+            training_log('Iteration: {}; Percent complete: {:.1f}%; Average loss: {:.4f}'.format(iteration, iteration / n_iteration * 100, print_loss_avg))
             print_loss = 0
 
         # Save checkpoint
@@ -139,7 +144,9 @@ def trainIters(word_map, person_map, pairs, encoder, decoder, encoder_optimizer,
             if not os.path.exists(directory):
                 os.makedirs(directory)
 
-            filepath = os.path.join(directory, f'{config.TRAIN_MODE}_{iteration}.tar')
+            filename = f'{config.TRAIN_MODE}_{iteration}.tar'
+            filepath = os.path.join(directory, filename)
+
             torch.save({
                 'iteration': iteration,
                 'en': encoder.state_dict(),
@@ -152,3 +159,6 @@ def trainIters(word_map, person_map, pairs, encoder, decoder, encoder_optimizer,
                 'embedding': embedding.state_dict(),
                 'persona': personas.state_dict(),
             }, filepath)
+
+            training_log('Save checkpoin {filename}')
+
