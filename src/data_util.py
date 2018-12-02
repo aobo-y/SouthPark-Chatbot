@@ -38,14 +38,13 @@ def readVocs(datafile):
     pairs = [[normalizeString(s) for s in l.split('\t')] for l in lines]
     return pairs
 
+def filter_pair(pair):
+    '''
+    Returns True iff both sentences in a pair 'p' are under the MAX_LENGTH threshold
+    '''
 
-# Returns True iff both sentences in a pair 'p' are under the MAX_LENGTH threshold
-def filter_pair(p):
-    # Input sequences need to preserve the last word for EOS token
-    if len(p) == 3 and config.USE_PERSONA:
-        return len(p[0].split(' ')) < config.MAX_LENGTH and len(p[1].split(' ')) < config.MAX_LENGTH and len(p[2]) > 1
-    elif len(p) == 2 and config.USE_PERSONA is not True:
-        return len(p[0].split(' ')) < config.MAX_LENGTH and len(p[1].split(' ')) < config.MAX_LENGTH
+    if len(pair) <= 3 and len(pair) >= 2:
+        return len(pair[0].split(' ')) < config.MAX_LENGTH and len(pair[1].split(' ')) < config.MAX_LENGTH
     else:
         return False
 
