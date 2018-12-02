@@ -167,7 +167,7 @@ def batch2TrainData(pair_batch, word_map):
 
 
 def data_2_indexes(pair, word_map, person_map):
-    speaker = pair[2] if len(pair) == 3 and config.USE_PERSONA else config.NONE_PERSONA
+    speaker = pair[2] if len(pair) == 3 else config.NONE_PERSONA
 
     return [
         indexes_from_sentence(pair[0], word_map),
