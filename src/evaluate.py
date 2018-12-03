@@ -5,6 +5,8 @@ Evaluate
 import torch
 import config
 from data_util import normalizeString, indexes_from_sentence
+import re
+import datetime
 
 USE_CUDA = torch.cuda.is_available()
 device = torch.device("cuda" if USE_CUDA else "cpu")
@@ -55,5 +57,8 @@ def evaluateExample(sentence, searcher, word_map, speaker_id):
     # evaluate sentence
     output_words = evaluate(searcher, word_map, input_sentence, speaker_id)
     output_words = [x for x in output_words if x not in config.SPECIAL_WORD_EMBEDDING_TOKENS.values()]
-
-    print('Bot:', ' '.join(output_words))
+    output_words[0] = output_words[0].capitalize()
+    res = ' '.join(output_words)
+    res = re.sub(r'\s+([.!?,])', r'\1', res)
+    print('Timestamp: {:%Y-%m-%d %H:%M:%S}> '.format(datetime.datetime.now()) + res)
+    return res

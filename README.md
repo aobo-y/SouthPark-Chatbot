@@ -10,28 +10,31 @@ pip install -r requirements.txt
 
 ## Usage
 
-*If you want to run it on the school server, run the following command to load the some modules first*
+
+### Pretrain
+
+Pretrain the model with anonymous dialogues, which keeps the initial personas stable.
+
+The model can restore the previously trained weights and continue training up on that.
 
 ```bash
-source server_env
+python3 src/chatbot.py --mode=pretrain
 ```
 
-## Train
+### Finetune
 
-The model can restore the previously trained weights and continue training up on that. 
+Finetune the model with personalized dialogues, which aims to train the personas.
 
 ```bash
-cd src
-python3 chatbot.py --mode train
+python3 src/chatbot.py --mode=finetune --checkpoint=pretrain_1000
 ```
 
-## Chat
+### Chat
 
 Start the command line interaction with the chat bot.
 
 ```bash
-cd src
-python3 chatbot.py --mode chat --speaker cartman
+python3 src/chatbot.py --mode=chat --checkpoint=finetune_1000 --speaker=cartman
 ```
 
 ## Config
@@ -42,12 +45,10 @@ Parameters | Description
 -----|------
 DATA_MODE | choose which data set to train on: general_data/persona_data
 MAX_LENGTH | maximum sentence length to consider
-MIN_COUNT | minimum word count threshold for trimming
 N_ITER | training iterations
-LOAD_CHECKPOINT | whether to load the checkpoints, if true, need to set CHECKPOINT_ITER
+RNN_TYPE | model of encoder & decode, support `LSTM` & `GRU`
 ATTN_MODEL | type of the attention model: dot/general/concat
 TRAIN_EMBEDDING | whether to update the word embeddding during training
-USE_PERSONA | whether to update the persona embedding during training
 HIDDEN_SIZE | size of the word embedding & number of hidden units in GRU
 PERSONA_SIZE | size of the persona embedding
 ENCODER_N_LAYERS | number of layers in bi-GRU encoder
@@ -57,3 +58,13 @@ DECODER_DROPOUT_RATE | dropout rate in GRU decoder
 TEACHER_FORCING_RATIO | the ratio that decoder learns from ground truth instead of last output
 LR | encoder learning rate
 DECODER_LR | decoder learning rate: LR*DECODER_LR
+TF_RATE_DECAY_FACTOR | k in the inverse sigmoid decay func of the teacher force rate
+
+
+### Miscellaneous
+
+*If you want to run it on the school server, run the following command to load the some modules first*
+
+```bash
+source server_env
+```

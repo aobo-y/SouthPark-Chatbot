@@ -81,7 +81,7 @@ def gen_fine_tune_file(talkers, scenario_set):
       if i > 0 and char in talkers:
         last_line = conversation[i - 1][0]
         buf += FINE_TUNE_FORMAT % (last_line, line, char)
-  with open('fine_tune.txt', 'w') as f:
+  with open('fine_tune.txt', 'w', encoding='utf8') as f:
     f.write(buf)
   print("Done!")
 
@@ -108,7 +108,7 @@ def gen_general_train_file(talkers, scenario_set):
       if i > 0 and char not in talkers:
         last_line = conversation[i - 1][0]
         buf += GENERAL_TRAIN_FORMAT % (last_line, line)
-  with open('general_train.txt', 'w') as f:
+  with open('general_train.txt', 'w', encoding='utf8') as f:
     f.write(buf)
   print("Done!")
 
