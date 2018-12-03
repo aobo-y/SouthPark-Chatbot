@@ -212,7 +212,7 @@ def telegram_init(speaker_name):
     args = parser.parse_args()
     config.USE_PERSONA = True
     checkpoint = None if not args.checkpoint else load_checkpoint(args.checkpoint)
-    encoder, decoder, embedding, personas, word_map, person_map, _, _ = build_model(checkpoint)
+    encoder, decoder, embedding, personas, word_map, person_map, _ = build_model(checkpoint)
     if person_map.has(speaker_name):
         print('Selected speaker:', speaker_name)
         speaker_id = person_map.get_index(speaker_name)
