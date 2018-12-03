@@ -92,6 +92,8 @@ class BeamSearchDecoder(nn.Module):
             reward = 0
             # Add here a function for shaping a reward
             return self.logp / float(self.leng - 1 + 1e-6) + alpha * reward
+        def __lt__(self, other):
+            return self.logp > other.logp
 
     def forward(self, input_seq, input_length, speaker_id, sos, eos):
         # how many sentence do you want to generate
