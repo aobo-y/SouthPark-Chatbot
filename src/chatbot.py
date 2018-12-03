@@ -14,7 +14,6 @@ from seq_decoder_persona import DecoderRNN
 from trainer import Trainer
 from evaluate import evaluateInput
 from embedding_map import EmbeddingMap
-import telegram
 
 DIR_PATH = os.path.dirname(__file__)
 USE_CUDA = torch.cuda.is_available()
