@@ -11,14 +11,16 @@ speakers = {
 }
 
 
+searcher, word_map, person_map = telegram_init()
+
 class TeleBot:
     def __init__(self, speaker, token):
         self.speaker = speaker
         self.token = token
     def run(self):
-        searcher, word_map, speaker_id = telegram_init(self.speaker)
         updater = Updater(token=self.token)
         dispatcher = updater.dispatcher
+        speaker_id = person_map.get_index(self.speaker)
         def start(bot, update):
             bot.send_message(chat_id=update.message.chat_id, text=evaluateExample(
                     "", 
