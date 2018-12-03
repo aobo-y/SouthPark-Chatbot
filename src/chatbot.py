@@ -205,25 +205,22 @@ def main():
         else:
             print('Invalid speaker. Possible speakers:', person_map.tokens)
 
-def telegram_init(speaker_name):
+def telegram_init():
     parser = argparse.ArgumentParser()
     parser.add_argument('--checkpoint')
     args = parser.parse_args()
     config.USE_PERSONA = True
     checkpoint = None if not args.checkpoint else load_checkpoint(args.checkpoint)
     encoder, decoder, embedding, personas, word_map, person_map, _ = build_model(checkpoint)
-    if person_map.has(speaker_name):
-        print('Selected speaker:', speaker_name)
-        speaker_id = person_map.get_index(speaker_name)
-        # Set dropout layers to eval mode
-        encoder.eval()
-        decoder.eval()
-        # Initialize search module
-        if config.BEAM_SEARCH_ON:
-            searcher = BeamSearchDecoder(encoder, decoder)
-        else:
-            searcher = GreedySearchDecoder(encoder, decoder)
-        return searcher, word_map, speaker_id
+    # Set dropout layers to eval mode
+    encoder.eval()
+    decoder.eval()
+    # Initialize search module
+    if config.BEAM_SEARCH_ON:
+        searcher = BeamSearchDecoder(encoder, decoder)
+    else:
+        searcher = GreedySearchDecoder(encoder, decoder)
+    return searcher, word_map, person_map
 
 
 if __name__ =='__main__':
