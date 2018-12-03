@@ -6,6 +6,7 @@ import sys
 import os
 sys.path.insert(0, '../src/')
 import chatbot
+from chatbot import load_checkpoint
 import bleu
 import evaluate
 from search_decoder import GreedySearchDecoder, BeamSearchDecoder
@@ -33,15 +34,16 @@ def read_config(file_path):
     return json_ob
 
 def load_model(configs):
-    voc, pairs, encoder, decoder, load_filename, encoder_optimizer_sd, decoder_optimizer_sd, embedding, personas = chatbot.build_model(load_checkpoint=True)
-
+    checkpoint = load_checkpoint(configs['checkpointname'])
+    #voc, pairs, encoder, decoder, load_filename, encoder_optimizer_sd, decoder_optimizer_sd, embedding, personas = chatbot.build_model(load_checkpoint=True)
+    encoder, decoder, embedding, personas, word_map, person_map, checkpoint = chatbot.build_model(checkpoint)
     if configs['model']['search_method']=='greedy':
         searcher = GreedySearchDecoder(encoder, decoder)
     elif configs['model']['search_method']=='beam':
         searcher = BeamSearchDecoder(encoder, decoder)
 
-    speaker = voc.people2index[configs['model']['speaker_name']]
-    return searcher, voc, speaker
+    #speaker = voc.people2index[configs['model']['speaker_name']]
+    return searcher, word_map, person_map
 
 def run(configs):
     # configs
@@ -53,7 +55,8 @@ def run(configs):
     if smoothing_function == "None":
         smoothing_function = None
     # load model
-    searcher, voc, speaker = load_model(configs)
+    searcher, word_map, person_map = load_model(configs)
+    speaker_id = person_map.get_index(configs['model']['speaker_name'])
     # read file
     file_path = configs['file_dir'][type_seq2seq][val_or_test]
     #print(file_path)
@@ -68,7 +71,7 @@ def run(configs):
             if type_seq2seq == 'personal':
                 personal_label = collect[2]
             # get model output
-            out = evaluate.evaluate(searcher, voc, input_sent, speaker)
+            out = evaluate.evaluate(searcher, word_map, input_sent, speaker_id)
             out[:] = [x for x in out if not (x=='EOS' or x=='PAD')]
             # make tokens
             hypothesis = make_tokens(' '.join(out))

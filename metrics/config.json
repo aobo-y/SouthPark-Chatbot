@@ -1,6 +1,7 @@
 {
     "test_type": "test",
     
+    "checkpointname": "finetune_15000",
     "file_dir":{
         "general":{
             "valid": "../src/data/general_data/val.txt",
