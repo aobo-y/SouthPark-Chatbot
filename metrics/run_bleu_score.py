@@ -88,4 +88,4 @@ def run(configs):
 if __name__ == '__main__':
     configs = read_config('config.json')
     average_bleu = run(configs)
-    print(average_bleu)
+    print('average_bleu:', average_bleu)

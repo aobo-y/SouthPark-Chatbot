@@ -14,12 +14,12 @@
     "model":{
         "type": "personal",
         "speaker_name": "cartman",
-        "search_method": "greedy"
+        "search_method": "beam"
 
     },
     "bleu":{
-        "n_gram": 2,
+        "n_gram": 1,
         "individual_or_cumulative": "cumulative",
-        "smoothing_function": "None"
+        "smoothing_function": "method1"
     }
 }
