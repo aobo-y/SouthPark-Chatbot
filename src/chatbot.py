@@ -90,8 +90,7 @@ def build_model(checkpoint):
         person_map.__dict__ = checkpoint['person_map_dict']
 
         # Load word embeddings
-        embedding = torch.nn.Embedding(word_map.size(), config.HIDDEN_SIZE)
-        embedding.load_state_dict(embedding_sd)
+        embedding = torch.nn.Embedding.from_pretrained(embedding_sd['weight'], False)
 
         # Load persona embeddings
         personas = torch.nn.Embedding(person_map.size(), config.PERSONA_SIZE)
@@ -107,14 +106,14 @@ def build_model(checkpoint):
 
 
     # make sure config is the same as init
-    assert embedding.embedding_dim == config.HIDDEN_SIZE
+    # assert embedding.embedding_dim == config.HIDDEN_SIZE
     assert personas.embedding_dim == config.PERSONA_SIZE
 
     print('Building encoder and decoder ...')
-
+    print(f'wordembedding size {embedding.embedding_dim}, persona size {personas.embedding_dim}, hidden size {config.HIDDEN_SIZE}, layers {config.DECODER_N_LAYERS}')
     # Initialize encoder & decoder models
-    encoder = EncoderRNN(embedding, config.ENCODER_N_LAYERS, config.ENCODER_DROPOUT_RATE, config.RNN_TYPE)
-    decoder = DecoderRNN(config.ATTN_MODEL, embedding, personas, word_map.size(),
+    encoder = EncoderRNN(embedding, config.HIDDEN_SIZE, config.ENCODER_N_LAYERS, config.ENCODER_DROPOUT_RATE, config.RNN_TYPE)
+    decoder = DecoderRNN(config.ATTN_MODEL, embedding, personas, config.HIDDEN_SIZE, word_map.size(),
                          config.DECODER_N_LAYERS, config.DECODER_DROPOUT_RATE, config.RNN_TYPE)
 
     if checkpoint:
