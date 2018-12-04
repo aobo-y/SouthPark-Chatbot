@@ -16,8 +16,10 @@ Then can use val/test data to calculate BLEU score.
 ## 2.
 
 In python command, Run 
->>> import nltk
->>> nltk.download('punkt')
+
+> import nltk
+
+> nltk.download('punkt')
 
 ## 3.
 
