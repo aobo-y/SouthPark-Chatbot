@@ -23,14 +23,13 @@ class DecoderRNN(nn.Module):
         hidden: final hidden state of GRU; shape=(n_layers x num_directions, batch_size, hidden_size)
     """
 
-    def __init__(self, attn_model, embedding, personas, output_size,
+    def __init__(self, attn_model, embedding, personas, hidden_size, output_size,
                  n_layers=1, dropout=0.5, rnn_type='GRU'):
         super(DecoderRNN, self).__init__()
         self.attn_model = attn_model
 
-        hidden_size = embedding.embedding_dim
         self.hidden_size = hidden_size
-        self.input_size = hidden_size + personas.embedding_dim
+        self.input_size = embedding.embedding_dim + personas.embedding_dim
         self.output_size = output_size
         self.n_layers = n_layers
         self.dropout = dropout

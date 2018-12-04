@@ -1,25 +1,28 @@
 {
     "test_type": "test",
     
+    "checkpointname": "finetune_15000",
     "file_dir":{
         "general":{
+            "train": "../src/data/general_data/train.txt",
             "valid": "../src/data/general_data/val.txt",
             "test": "../src/data/general_data/test.txt"
         },
         "personal":{
+            "train": "../src/data/persona_data/train.txt",
             "valid": "../src/data/persona_data/val.txt",
             "test": "../src/data/persona_data/test.txt"
         }
     },
     "model":{
         "type": "personal",
-        "speaker_name": "cartman",
-        "search_method": "greedy"
+        "speaker_name": "mr. garrison",
+        "search_method": "beam"
 
     },
     "bleu":{
-        "n_gram": 2,
+        "n_gram": 1,
         "individual_or_cumulative": "cumulative",
-        "smoothing_function": "None"
+        "smoothing_function": "method1"
     }
 }
