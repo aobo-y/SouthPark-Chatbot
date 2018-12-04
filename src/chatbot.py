@@ -184,9 +184,9 @@ def chat(encoder, decoder, word_map, speaker_id):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--mode', choices={'pretrain', 'finetune', 'chat'}, help="mode to run the chatbot")
-    parser.add_argument('--speaker', default='<none>')
-    parser.add_argument('--checkpoint')
+    parser.add_argument('-m', '--mode', choices={'pretrain', 'finetune', 'chat'}, help="mode to run the chatbot")
+    parser.add_argument('-s', '--speaker', default='<none>')
+    parser.add_argument('-cp', '--checkpoint')
     args = parser.parse_args()
 
     checkpoint = None if not args.checkpoint else load_checkpoint(args.checkpoint)
@@ -207,7 +207,7 @@ def main():
 
 def telegram_init():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--checkpoint')
+    parser.add_argument('-cp', '--checkpoint')
     args = parser.parse_args()
     config.USE_PERSONA = True
     checkpoint = None if not args.checkpoint else load_checkpoint(args.checkpoint)
