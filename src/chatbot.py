@@ -90,8 +90,7 @@ def build_model(checkpoint):
         person_map.__dict__ = checkpoint['person_map_dict']
 
         # Load word embeddings
-        embedding = torch.nn.Embedding(word_map.size(), config.HIDDEN_SIZE)
-        embedding.load_state_dict(embedding_sd)
+        embedding = torch.nn.Embedding.from_pretrained(embedding_sd['weight'], False)
 
         # Load persona embeddings
         personas = torch.nn.Embedding(person_map.size(), config.PERSONA_SIZE)
