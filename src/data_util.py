@@ -9,6 +9,9 @@ import config
 # Lowercase and remove non-letter characters
 def normalizeString(s):
     s = s.lower()
+
+    # trim ending single stop
+    s = re.sub(r'([^\.])(\.)$', r'\1', s)
     # give a leading & ending spaces to punctuations
     s = re.sub(r'([.!?,])', r' \1 ', s)
     # purge unrecognized token with space
