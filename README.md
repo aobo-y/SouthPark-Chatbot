@@ -60,10 +60,10 @@ DATA_MODE | choose which data set to train on: general_data/persona_data
 MAX_LENGTH | maximum sentence length to consider
 N_ITER | training iterations
 RNN_TYPE | model of encoder & decode, support `LSTM` & `GRU`
-ATTN_MODEL | type of the attention model: dot/general/concat
+ATTN_TYPE | type of the attention model: dot/general/concat
 TRAIN_EMBEDDING | whether to update the word embeddding during training
 HIDDEN_SIZE | size of the word embedding & number of hidden units in GRU
-PERSONA_SIZE | size of the persona embedding
+PERSONA_EMBEDDING_SIZE | size of the persona embedding
 ENCODER_N_LAYERS | number of layers in bi-GRU encoder
 DECODER_N_LAYERS | number of layers in GRU decoder
 ENCODER_DROPOUT_RATE | dropout rate in bi-GRU encoder

@@ -26,10 +26,10 @@ class GreedySearchDecoder(nn.Module):
         all_scores: collections of words scores
     """
 
-    def __init__(self, encoder, decoder):
+    def __init__(self, model):
         super(GreedySearchDecoder, self).__init__()
-        self.encoder = encoder
-        self.decoder = decoder
+        self.encoder = model.encoder
+        self.decoder = model.decoder
 
     def forward(self, input_seq, input_length, speaker_id, sos, eos):
         # Forward input through encoder model
@@ -74,10 +74,10 @@ class BeamSearchDecoder(nn.Module):
         all_scores: collections of words scores
     """
 
-    def __init__(self, encoder, decoder):
+    def __init__(self, model):
         super(BeamSearchDecoder, self).__init__()
-        self.encoder = encoder
-        self.decoder = decoder
+        self.encoder = model.encoder
+        self.decoder = model.decoder
         self.beam_width = config.BEAM_WIDTH
 
     class BeamSearchNode(object):

@@ -23,10 +23,10 @@ class DecoderRNN(nn.Module):
         hidden: final hidden state of GRU; shape=(n_layers x num_directions, batch_size, hidden_size)
     """
 
-    def __init__(self, attn_model, embedding, personas, hidden_size, output_size,
-                 n_layers=1, dropout=0.5, rnn_type='GRU'):
+    def __init__(self, embedding, personas, hidden_size, output_size,
+                 n_layers, dropout, rnn_type, attn_type):
         super(DecoderRNN, self).__init__()
-        self.attn_model = attn_model
+        self.attn_type = attn_type
 
         self.hidden_size = hidden_size
         self.input_size = embedding.embedding_dim + personas.embedding_dim
@@ -47,7 +47,7 @@ class DecoderRNN(nn.Module):
                                   dropout=(0 if n_layers == 1 else dropout))
         self.concat = nn.Linear(hidden_size * 2, hidden_size)
         self.out = nn.Linear(hidden_size, self.output_size)
-        self.attn = Attn(attn_model, hidden_size)
+        self.attn = Attn(attn_type, hidden_size)
 
     def forward(self, input_step, speaker, last_hidden, encoder_outputs):
         # Note: we run this one step(word) at a time
@@ -56,9 +56,9 @@ class DecoderRNN(nn.Module):
         # shape = (1, batch_size, hidden_size)
         embedded = self.embedding(input_step)
         embedded = self.embedding_dropout(embedded)
-        # shape = (1, batch_size, persona_size)
+        # shape = (1, batch_size, PERSONA_EMBEDDING_SIZE)
         persona = self.personas(speaker)
-        # shape = (1, batch_size, hidden_size+persona_size)
+        # shape = (1, batch_size, hidden_size+PERSONA_EMBEDDING_SIZE)
         features = torch.cat((embedded, persona), 2)
 
         # Forward through GRU

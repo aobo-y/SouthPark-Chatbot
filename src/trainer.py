@@ -36,16 +36,15 @@ def mask_nll_loss(inp, target, mask):
 class Trainer:
     '''Trainer to train the seq2seq model'''
 
-    def __init__(self, encoder, decoder, word_map, person_map, embedding, personas):
-        self.encoder = encoder
-        self.decoder = decoder
+    def __init__(self, model, word_map, person_map):
+        self.model = model
+        self.encoder = model.encoder
+        self.decoder = model.decoder
         self.word_map = word_map
         self.person_map = person_map
-        self.embedding = embedding
-        self.personas = personas
 
-        self.encoder_optimizer = optim.Adam(encoder.parameters(), lr=config.LR)
-        self.decoder_optimizer = optim.Adam(decoder.parameters(), lr=config.LR * config.DECODER_LR)
+        self.encoder_optimizer = optim.Adam(self.encoder.parameters(), lr=config.LR)
+        self.decoder_optimizer = optim.Adam(self.decoder.parameters(), lr=config.LR * config.DECODER_LR)
 
         # trained iteration
         self.trained_iteration = 0
@@ -203,14 +202,11 @@ class Trainer:
                     'iteration': iteration,
                     'loss': loss,
                     'stage': stage,
-                    'en': self.encoder.state_dict(),
-                    'de': self.decoder.state_dict(),
+                    'model': self.model.state_dict(),
                     'en_opt': self.encoder_optimizer.state_dict(),
                     'de_opt': self.decoder_optimizer.state_dict(),
                     'word_map_dict': self.word_map.__dict__,
                     'person_map_dict': self.person_map.__dict__,
-                    'embedding': self.embedding.state_dict(),
-                    'persona': self.personas.state_dict(),
                 }, filepath)
 
                 self.log(f'Save checkpoin {filename}')
