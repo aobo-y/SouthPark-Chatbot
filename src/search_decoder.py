@@ -28,18 +28,14 @@ class GreedySearchDecoder(nn.Module):
 
     def __init__(self, model):
         super(GreedySearchDecoder, self).__init__()
-        self.encoder = model.encoder
-        self.decoder = model.decoder
+        self.model = model
 
     def forward(self, input_seq, input_length, speaker_id, sos, eos):
         # Forward input through encoder model
-        encoder_outputs, encoder_hidden = self.encoder(input_seq, input_length)
+        encoder_outputs, encoder_hidden = self.model.encoder(input_seq, input_length)
         # Prepare encoder's final hidden layer to be first hidden input to the decoder
-        if config.RNN_TYPE == 'LSTM':
-            decoder_hidden = (encoder_hidden[0][:self.decoder.n_layers],  # hidden state
-                              encoder_hidden[1][:self.decoder.n_layers])  # cell state
-        else:
-            decoder_hidden = encoder_hidden[:self.decoder.n_layers]
+        decoder_hidden = self.model.cvt_hidden(encoder_hidden)
+
         # Initialize decoder input with SOS_token
         decoder_input = torch.ones(1, 1, device=device, dtype=torch.long) * sos
         # Initialize tensors to append decoded words to
@@ -51,7 +47,7 @@ class GreedySearchDecoder(nn.Module):
             # Transform speaker_id from int into tensor with shape=(1, 1)
             speaker_input = torch.LongTensor([[speaker_id]])
             speaker_input = speaker_input.to(device)
-            decoder_output, decoder_hidden = self.decoder(decoder_input, speaker_input, decoder_hidden, encoder_outputs)
+            decoder_output, decoder_hidden = self.model.decoder(decoder_input, speaker_input, decoder_hidden, encoder_outputs)
             # Obtain most likely word token and its softmax score
             decoder_scores, decoder_input = torch.max(decoder_output, dim=1)
             # Record token and score
@@ -76,8 +72,7 @@ class BeamSearchDecoder(nn.Module):
 
     def __init__(self, model):
         super(BeamSearchDecoder, self).__init__()
-        self.encoder = model.encoder
-        self.decoder = model.decoder
+        self.model = model
         self.beam_width = config.BEAM_WIDTH
 
     class BeamSearchNode(object):
@@ -99,13 +94,9 @@ class BeamSearchDecoder(nn.Module):
         # how many sentence do you want to generate
         topk = config.BEAM_CANDIDATE_NUM
         # decoding goes sentence by sentence
-        encoder_outputs, encoder_hidden = self.encoder(input_seq, input_length)
-        if config.RNN_TYPE == 'LSTM':
-            decoder_hidden = (encoder_hidden[0][:self.decoder.n_layers],   # hidden state
-                              encoder_hidden[1][:self.decoder.n_layers])   # cell state
-        else:
-            decoder_hidden = encoder_hidden[:self.decoder.n_layers]
+        encoder_outputs, encoder_hidden = self.model.encoder(input_seq, input_length)
 
+        decoder_hidden = self.model.cvt_hidden(encoder_hidden)
         # Start with the start of the sentence token
         decoder_input = torch.ones(1, 1, device=device, dtype=torch.long) * sos
 
@@ -144,7 +135,7 @@ class BeamSearchDecoder(nn.Module):
             speaker_input = torch.LongTensor([[speaker_id]])
             speaker_input = speaker_input.to(device)
             # decode for one step using decoder
-            decoder_output, decoder_hidden = self.decoder(decoder_input, speaker_input, decoder_hidden, encoder_outputs)
+            decoder_output, decoder_hidden = self.model.decoder(decoder_input, speaker_input, decoder_hidden, encoder_outputs)
             # PUT HERE REAL BEAM SEARCH OF TOP
             log_prob, indexes = torch.topk(decoder_output, self.beam_width)
             nextnodes = []

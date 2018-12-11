@@ -23,6 +23,8 @@ class Seq2Seq(nn.Module):
 
         super(Seq2Seq, self).__init__()
 
+        self.rnn_type = rnn_type
+
         self.word_ebd = nn.Embedding(*word_ebd_shape)
 
         # Initialize persona embedding with 0
@@ -41,6 +43,20 @@ class Seq2Seq(nn.Module):
         self.persona_ebd.weight.requires_grad = False
 
 
-    def forward(self, searcher):
+    def cvt_hidden(self, encoder_hidden):
+        ''' convert encoder hidden to decoder hidden '''
+
+        decoder_layers = self.decoder.n_layers
+        # Set initial decoder hidden state to the encoder's final hidden state
+        if self.rnn_type == 'LSTM':
+            decoder_hidden = (encoder_hidden[0][:decoder_layers],   # hidden state
+                            encoder_hidden[1][:decoder_layers])   # cell state
+        else:
+            decoder_hidden = encoder_hidden[:decoder_layers]
+
+        return decoder_hidden
+
+
+    def forward(self, input_var, searcher):
         pass
 

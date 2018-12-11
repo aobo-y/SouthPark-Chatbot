@@ -38,13 +38,12 @@ class Trainer:
 
     def __init__(self, model, word_map, person_map):
         self.model = model
-        self.encoder = model.encoder
-        self.decoder = model.decoder
+
         self.word_map = word_map
         self.person_map = person_map
 
-        self.encoder_optimizer = optim.Adam(self.encoder.parameters(), lr=config.LR)
-        self.decoder_optimizer = optim.Adam(self.decoder.parameters(), lr=config.LR * config.DECODER_LR)
+        self.encoder_optimizer = optim.Adam(modelencoder.parameters(), lr=config.LR)
+        self.decoder_optimizer = optim.Adam(model.decoder.parameters(), lr=config.LR * config.DECODER_LR)
 
         # trained iteration
         self.trained_iteration = 0
@@ -95,7 +94,7 @@ class Trainer:
         n_totals = 0.
 
         # Forward pass through encoder
-        encoder_outputs, encoder_hidden = self.encoder(input_variable, lengths)
+        encoder_outputs, encoder_hidden = self.model.encoder(input_variable, lengths)
 
         # Create initial decoder input
         sos = self.word_map.get_index(config.SPECIAL_WORD_EMBEDDING_TOKENS['SOS'])
@@ -104,17 +103,12 @@ class Trainer:
         decoder_input = torch.LongTensor([[sos for _ in range(batch_size)]])
         decoder_input = decoder_input.to(DEVICE)
 
-        decoder_layers = self.decoder.n_layers
-        # Set initial decoder hidden state to the encoder's final hidden state
-        if config.RNN_TYPE == 'LSTM':
-            decoder_hidden = (encoder_hidden[0][:decoder_layers],   # hidden state
-                            encoder_hidden[1][:decoder_layers])   # cell state
-        else:
-            decoder_hidden = encoder_hidden[:decoder_layers]
+
+        decoder_hidden = self.model.cvt_hidden(encoder_hidden)
 
         # Forward batch of sequences through decoder one time step at a time
         for t in range(max_target_len):
-            decoder_output, decoder_hidden = self.decoder(decoder_input, speaker_variable, decoder_hidden, encoder_outputs)
+            decoder_output, decoder_hidden = self.model.decoder(decoder_input, speaker_variable, decoder_hidden, encoder_outputs)
 
             if random.random() < tf_rate:
                 # Teacher forcing: next input is current target
@@ -136,8 +130,8 @@ class Trainer:
         loss.backward()
 
         # Clip gradients: gradients are modified in place
-        _ = torch.nn.utils.clip_grad_norm_(self.encoder.parameters(), config.CLIP)
-        _ = torch.nn.utils.clip_grad_norm_(self.decoder.parameters(), config.CLIP)
+        _ = torch.nn.utils.clip_grad_norm_(self.model.encoder.parameters(), config.CLIP)
+        _ = torch.nn.utils.clip_grad_norm_(self.model.decoder.parameters(), config.CLIP)
 
         # Adjust model weights
         self.encoder_optimizer.step()
