@@ -42,7 +42,7 @@ class Trainer:
         self.word_map = word_map
         self.person_map = person_map
 
-        self.encoder_optimizer = optim.Adam(modelencoder.parameters(), lr=config.LR)
+        self.encoder_optimizer = optim.Adam(model.encoder.parameters(), lr=config.LR)
         self.decoder_optimizer = optim.Adam(model.decoder.parameters(), lr=config.LR * config.DECODER_LR)
 
         # trained iteration
