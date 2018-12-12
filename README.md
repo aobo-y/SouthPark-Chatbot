@@ -61,7 +61,6 @@ MAX_LENGTH | maximum sentence length to consider
 N_ITER | training iterations
 RNN_TYPE | model of encoder & decode, support `LSTM` & `GRU`
 ATTN_TYPE | type of the attention model: dot/general/concat
-TRAIN_EMBEDDING | whether to update the word embeddding during training
 HIDDEN_SIZE | size of the word embedding & number of hidden units in GRU
 PERSONA_EMBEDDING_SIZE | size of the persona embedding
 ENCODER_N_LAYERS | number of layers in bi-GRU encoder
