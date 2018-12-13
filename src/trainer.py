@@ -23,15 +23,13 @@ def teacher_forcing_rate(idx):
     rate = k_factor / (k_factor + math.exp(idx / k_factor))
     return rate
 
-# TODO consider use nn.CrossEntropyLoss
 def mask_nll_loss(inp, target, mask):
     # Calculate our loss based on our decoder’s output tensor, the target tensor,
     # and a binary mask tensor describing the padding of the target tensor.
-    n_total = mask.sum().float()
-    cross_entropy = -torch.log(torch.gather(inp, 1, target.view(-1, 1)))
+    cross_entropy = -torch.log(torch.gather(inp, 2, target.unsqueeze(2)).squeeze(2))
     loss = cross_entropy.masked_select(mask).mean()
     loss = loss.to(DEVICE)
-    return loss, n_total.mean()
+    return loss
 
 class Trainer:
     '''Trainer to train the seq2seq model'''
@@ -75,56 +73,30 @@ class Trainer:
         '''
 
         # extract fields from batch
-        input_variable, lengths, target_variable, mask, max_target_len, speaker_variable = training_batch
+        input_var, lengths, target_var, mask, max_target_len, speaker_var = training_batch
+
+        # target var start with sos
+        sos = self.word_map.get_index(config.SPECIAL_WORD_EMBEDDING_TOKENS['SOS'])
+        batch_size = target_var.size(1)
+        start_tensor = torch.full((1, batch_size), sos, dtype=torch.long)
+        target_var = torch.cat((start_tensor, target_var))
 
         # Zero gradients
         self.encoder_optimizer.zero_grad()
         self.decoder_optimizer.zero_grad()
 
         # Set DEVICE options
-        input_variable = input_variable.to(DEVICE)
+        input_var = input_var.to(DEVICE)
         lengths = lengths.to(DEVICE)
-        target_variable = target_variable.to(DEVICE)
+        target_var = target_var.to(DEVICE)
         mask = mask.to(DEVICE)
-        speaker_variable = speaker_variable.to(DEVICE)
+        speaker_var = speaker_var.to(DEVICE)
 
-        # Initialize variables
-        loss = 0.
-        print_loss = []
-        n_totals = 0.
+        # Pass through model
+        output_var = self.model(input_var, lengths, target_var[:-1,:], speaker_var, max_target_len, tf_rate)
 
-        # Forward pass through encoder
-        encoder_outputs, encoder_hidden = self.model.encoder(input_variable, lengths)
-
-        # Create initial decoder input
-        sos = self.word_map.get_index(config.SPECIAL_WORD_EMBEDDING_TOKENS['SOS'])
-
-        batch_size = input_variable.size(1)
-        decoder_input = torch.LongTensor([[sos for _ in range(batch_size)]])
-        decoder_input = decoder_input.to(DEVICE)
-
-
-        decoder_hidden = self.model.cvt_hidden(encoder_hidden)
-
-        # Forward batch of sequences through decoder one time step at a time
-        for t in range(max_target_len):
-            decoder_output, decoder_hidden = self.model.decoder(decoder_input, speaker_variable, decoder_hidden, encoder_outputs)
-
-            if random.random() < tf_rate:
-                # Teacher forcing: next input is current target
-                decoder_input = target_variable[t].view(1, -1)
-            else:
-                # No teacher forcing: next input is decoder's own current output
-                _, topi = decoder_output.topk(1)
-                decoder_input = torch.LongTensor([[topi[i][0] for i in range(batch_size)]])
-                decoder_input = decoder_input.to(DEVICE)
-
-            # Calculate and accumulate loss
-            mask_loss, n_total = mask_nll_loss(decoder_output, target_variable[t], mask[t])
-            loss += mask_loss
-            print_loss.append(mask_loss.item() * n_total)
-            n_totals += n_total
-
+        # Calculate and accumulate loss
+        loss = mask_nll_loss(output_var, target_var[1:,:], mask)
 
         # Perform backpropagation
         loss.backward()
@@ -137,7 +109,7 @@ class Trainer:
         self.encoder_optimizer.step()
         self.decoder_optimizer.step()
 
-        return sum(print_loss) / n_totals
+        return loss
 
 
     def train(self, pairs, n_iteration, batch_size=1, stage=None):

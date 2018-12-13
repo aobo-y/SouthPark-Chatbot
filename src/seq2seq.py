@@ -1,5 +1,6 @@
 ''' Core Seq2seq model '''
 
+import random
 import torch
 from torch import nn
 from seq_encoder import EncoderRNN
@@ -57,6 +58,33 @@ class Seq2Seq(nn.Module):
         return decoder_hidden
 
 
-    def forward(self, input_var, searcher):
-        pass
+    def forward(self, input_var, lengths, target_var, speaker_var, max_length, tf_rate=0):
+        # Forward pass through encoder
+        encoder_outputs, encoder_hidden = self.encoder(input_var, lengths)
 
+        decoder_hidden = self.cvt_hidden(encoder_hidden)
+
+        # teacher forcing applies to entire sequence
+        teacher_forcing = random.random() < tf_rate
+
+        outputs = []
+        # Forward batch of sequences through decoder one time step at a time
+        for t in range(max_length):
+            # use ground truth if its the first round or teacher forcing
+            if t == 0 or teacher_forcing:
+                # Teacher forcing: next input is current target
+                decoder_var = target_var[t].view(1, -1)
+            else:
+                # No teacher forcing: next input is decoder's own current output
+                _, topi = decoder_output.topk(1)
+                decoder_var = topi.view(1, -1)
+
+            # TODO: decoder_output does not have 1st length dim
+            # should add that dim to align with others
+            decoder_output, decoder_hidden = self.decoder(decoder_var, speaker_var, decoder_hidden, encoder_outputs)
+
+            outputs.append(decoder_output)
+
+        output_var = torch.stack(outputs)
+
+        return output_var
