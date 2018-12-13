@@ -33,7 +33,7 @@ class GreedySearchDecoder(nn.Module):
     def forward(self, input_seq, input_length, speaker_id, sos, eos):
         target_var = torch.full((1, 1), sos, dtype=torch.long, device=device)
 
-        speaker_var = torch.LongTensor([[speaker_id]], device=device)
+        speaker_var = torch.tensor([[speaker_id]], dtype=torch.long, device=device)
 
         output_var = self.model(input_seq, input_length, target_var, speaker_var, config.MAX_LENGTH)
 
