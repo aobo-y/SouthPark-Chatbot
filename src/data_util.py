@@ -15,6 +15,13 @@ def normalizeString(s):
     s = re.sub(r'[^0-9a-z.!?,]+', r' ', s)
     # squeeze multiple spaces
     s = re.sub(r'([ ]+)', r' ', s)
+    # expand the abbreviation
+    s = re.compile("n\'t").sub(' not', s)
+    s = re.compile("\'d").sub(' would', s)
+    s = re.compile("\'ll").sub(' will', s)
+    s = re.compile("\'m").sub(' am', s)
+    s = re.compile("\'re").sub(' are', s)
+    s = re.compile("\'ve").sub(' have', s)
     # remove extra leading & ending space
     return s.strip()
 
