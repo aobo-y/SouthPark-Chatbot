@@ -3,12 +3,10 @@ Greedy decoding is the decoding method
 that we use during training when we are NOT using teacher forcing.
 """
 
-import operator
+import math
+import random
 import torch
 from torch import nn
-import numpy as np
-import torch.nn.functional as F
-from queue import PriorityQueue
 import config
 
 USE_CUDA = torch.cuda.is_available()
@@ -62,108 +60,94 @@ class BeamSearchDecoder(nn.Module):
         self.model = model
         self.beam_width = config.BEAM_WIDTH
 
-    class BeamSearchNode(object):
-        def __init__(self, hiddenstate, previousNode, wordId, logProb, length):
-            self.h = hiddenstate
-            self.prevNode = previousNode
-            self.wordid = wordId
-            self.logp = logProb
-            self.leng = length
+    class BeamSearchNode:
+        def __init__(self, hidden, idx, value=None, previousNode=None, logp=0, depth=0):
+            self.prevnode = previousNode
+            self.hidden = hidden
+            self.value = value
+            self.idx = idx
+            self.logp = logp
+            self.depth = depth
 
-        def eval(self, alpha=1.0):
-            reward = 0
-            # Add here a function for shaping a reward
-            return self.logp / float(self.leng - 1 + 1e-6) + alpha * reward
-        def __lt__(self, other):
-            return self.logp > other.logp
+        def eval(self):
+            # for now, simply choose the one with maximum average
+            return self.logp / float(self.depth)
 
-    def forward(self, input_seq, input_length, speaker_id, sos, eos):
-        # how many sentence do you want to generate
-        topk = config.BEAM_CANDIDATE_NUM
+
+    def forward(self, input_var, lengths, speaker_id, sos, eos):
         # decoding goes sentence by sentence
-        encoder_outputs, encoder_hidden = self.model.encoder(input_seq, input_length)
+        encoder_outputs, encoder_hidden = self.model.encoder(input_var, lengths)
 
         decoder_hidden = self.model.cvt_hidden(encoder_hidden)
-        # Start with the start of the sentence token
-        decoder_input = torch.ones(1, 1, device=device, dtype=torch.long) * sos
+
+        # Transform speaker_id from int into tensor with shape=(1, 1)
+        speaker_var = torch.tensor([[speaker_id]], dtype=torch.long, device=device)
 
         # Number of sentence to generate
         endnodes = []
-        number_required = min((topk + 1), topk - len(endnodes))
 
-        # starting node -  hidden vector, previous node, word id, logp, length
-        node = self.BeamSearchNode(decoder_hidden, None, decoder_input, 0, 1)
-        nodes = PriorityQueue()
+        # Start with the start of the sentence token
+        root_idx = torch.tensor(sos, dtype=torch.long, device=device)
+        root = self.BeamSearchNode(decoder_hidden, root_idx)
+        leaf = [root]
 
-        # start the queue
-        nodes.put((-node.eval(), node))
-        qsize = 1
+        for dep in range(config.MAX_LENGTH):
+            candidates = []
 
-        # start beam search
-        while True:
-            # give up when decoding takes too long
-            if qsize > 2000: break
+            for prevnode in leaf:
+                decoder_input = prevnode.idx.view(1, 1)
 
-            # fetch the best node
-            score, n = nodes.get()
-            decoder_input = n.wordid
-            decoder_hidden = n.h
+                # Forward pass through decoder
+                # decode for one step using decoder
+                decoder_output, decoder_hidden = self.model.decoder(decoder_input, speaker_var, prevnode.hidden, encoder_outputs)
 
-            if n.wordid.item() == eos and n.prevNode != None:
-                endnodes.append((score, n))
-                # if we reached maximum # of sentences required
-                if len(endnodes) >= number_required:
-                    break
+                values, indexes = decoder_output.topk(self.beam_width)
+
+                for i in range(self.beam_width):
+                    idx = indexes[0][i]
+                    value = values[0][i]
+                    logp = math.log(value)
+
+                    node = self.BeamSearchNode(decoder_hidden, idx, value, prevnode, logp + prevnode.logp, dep + 1)
+
+                    candidates.append(node)
+
+            candidates.sort(key=lambda n: n.logp, reverse=True)
+
+            leaf = []
+            for candiate in candidates[:self.beam_width]:
+                if candiate.idx == eos:
+                    endnodes.append(candiate)
                 else:
-                    continue
+                    leaf.append(candiate)
 
-            # Forward pass through decoder
-            # Transform speaker_id from int into tensor with shape=(1, 1)
-            speaker_input = torch.LongTensor([[speaker_id]])
-            speaker_input = speaker_input.to(device)
-            # decode for one step using decoder
-            decoder_output, decoder_hidden = self.model.decoder(decoder_input, speaker_input, decoder_hidden, encoder_outputs)
-            # PUT HERE REAL BEAM SEARCH OF TOP
-            log_prob, indexes = torch.topk(decoder_output, self.beam_width)
-            nextnodes = []
+            # sentecnes don't need to be beam_width exactly, here just for simplicity
+            if len(endnodes) >= self.beam_width:
+                endnodes = endnodes[:self.beam_width]
+                break
 
-            for new_k in range(self.beam_width):
-                decoded_t = indexes[0][new_k].view(1, -1)
-                log_p = log_prob[0][new_k].item()
+        # arrive max length before having enough results
+        if len(endnodes) < self.beam_width:
+            endnodes = endnodes + leaf[:self.beam_width - len(endnodes)]
 
-                node = self.BeamSearchNode(decoder_hidden, n, decoded_t, n.logp + log_p, n.leng + 1)
-                score = -node.eval()
-                nextnodes.append((score, node))
+        # choose the max/random from the results
+        if config.BEAM_MODE == 'random':
+            endnode = random.choice(endnodes)
+        else:
+            endnode = max(endnodes, key=lambda n: n.eval())
 
-            # put them into queue
-            for i in range(len(nextnodes)):
-                score, nn = nextnodes[i]
-                nodes.put((score, nn))
-                # increase qsize
-            qsize += len(nextnodes) - 1
+        tokens = []
+        scores = []
+        while endnode.idx != sos:
+            tokens.append(endnode.idx)
+            scores.append(endnode.value)
+            endnode = endnode.prevnode
 
-        # choose nbest paths, back trace them
-        if len(endnodes) == 0:
-            endnodes = [nodes.get() for _ in range(topk)]
+        tokens.reverse()
+        scores.reverse()
 
-        # Record token and score
-        all_tokens = []
-        all_scores = []
-        for score, n in sorted(endnodes, key=operator.itemgetter(0)):
-            # back trace
-            tokens = []
-            scores = []
-            while n.prevNode != None:
-                n = n.prevNode
-                tokens.append(n.wordid)
-                scores.append(n.logp)
-            all_tokens.append(tokens[::-1])
-            all_scores.append(scores[::-1])
-        idx = self.random_pick(len(all_tokens))
-        return all_tokens[idx], all_scores[idx]
+        tokens = torch.stack(tokens)
+        scores = torch.stack(scores)
 
-    def random_pick(self, num):
-        weight = [i for i in range(num,0,-1)]
-        num_exp = np.exp(weight)
-        prob = num_exp / num_exp.sum(0)
-        return np.random.choice(num, 1, p=prob)[0]
+        return tokens, scores
+

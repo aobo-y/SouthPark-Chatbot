@@ -93,10 +93,10 @@ class Trainer:
         speaker_var = speaker_var.to(DEVICE)
 
         # Pass through model
-        output_var = self.model(input_var, lengths, target_var[:-1,:], speaker_var, max_target_len, tf_rate)
+        output_var = self.model(input_var, lengths, target_var[:-1, :], speaker_var, max_target_len, tf_rate)
 
         # Calculate and accumulate loss
-        loss = mask_nll_loss(output_var, target_var[1:,:], mask)
+        loss = mask_nll_loss(output_var, target_var[1:, :], mask)
 
         # Perform backpropagation
         loss.backward()
