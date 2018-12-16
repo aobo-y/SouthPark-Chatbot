@@ -67,21 +67,13 @@ class DecoderRNN(nn.Module):
         rnn_output, hidden = self.decoder(features, last_hidden)
         # Calculate attention weights from the current GRU output
         # attn_weights shape = (batch_size, 1, max_length)
-        attn_weights = self.attn(rnn_output, encoder_outputs)
-        # Multiply attention weights to encoder outputs to get new "weighted sum" context vector
-        # shape = (batch_size, hidden_size, 1)
-        context = attn_weights.bmm(encoder_outputs.transpose(0, 1))
-        # Concatenate weighted context vector and GRU output using Luong eq. 5
-        # shape = (batch_size, hidden_size)
-        rnn_output = rnn_output.squeeze(0)
-        # shape = (batch_size, hidden_size)
-        context = context.squeeze(1)
-        # shape = (batch_size, hidden_size*2)
-        concat_input = torch.cat((rnn_output, context), 1)
-        # shape = (batch_size, hidden_size)
+        context = self.attn(rnn_output, encoder_outputs)
+
+        # Concatenate weighted context vector and RNN output using Luong eq. 5
+        concat_input = torch.cat((rnn_output, context), 2)
         concat_output = torch.tanh(self.concat(concat_input))
+
         # Predict next word using Luong eq. 6
-        # shape = (batch_size, voc_dict.length)
         output = self.out(concat_output)
-        output = nn.functional.softmax(output, dim=1)
+        output = nn.functional.softmax(output, dim=2)
         return output, hidden

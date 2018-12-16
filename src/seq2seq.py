@@ -76,15 +76,12 @@ class Seq2Seq(nn.Module):
                 decoder_var = target_var[t].view(1, -1)
             else:
                 # No teacher forcing: next input is decoder's own current output
-                _, topi = decoder_output.topk(1)
-                decoder_var = topi.view(1, -1)
+                _, decoder_var = decoder_output.max(2)
 
-            # TODO: decoder_output does not have 1st length dim
-            # should add that dim to align with others
             decoder_output, decoder_hidden = self.decoder(decoder_var, speaker_var, decoder_hidden, encoder_outputs)
 
             outputs.append(decoder_output)
 
-        output_var = torch.stack(outputs)
+        output_var = torch.cat(outputs, 0)
 
         return output_var
