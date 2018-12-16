@@ -1,7 +1,4 @@
-"""
-Decoder
-For the decoder, we manually feed our batch one time step at a time.
-"""
+''' Decoder '''
 
 import torch
 from torch import nn
@@ -12,14 +9,14 @@ class DecoderRNN(nn.Module):
     This means that our embedded word tensor and GRU output will both have shape (1, batch_size, hidden_size).
 
     Inputs:
-        input_step: one time step (one word) of input sequence batch; shape=(1, batch_size)
-        speakers: speaker id, shape = (1, batch_size)
-        last_hidden: final hidden layer of GRU; shape=(n_layers x num_directions, batch_size, hidden_size)
+        input_seq: one time step (one word) of input sequence batch; shape=(seq_length, batch_size)
+        speakers: speaker id, shape=(batch_size)
+        init_hidden: initial hidden state; shape=(n_layers x num_directions, batch_size, hidden_size)
         encoder_outputs: encoder model’s output; shape=(max_length, batch_size, hidden_size)
 
     Outputs:
         output: softmax normalized tensor giving probabilities of each word being the correct next word in the decoded sequence;
-                        shape=(batch_size, voc.num_words)
+                        shape=(seq_length, batch_size, voc.num_words)
         hidden: final hidden state of GRU; shape=(n_layers x num_directions, batch_size, hidden_size)
     """
 
@@ -49,31 +46,30 @@ class DecoderRNN(nn.Module):
         self.out = nn.Linear(hidden_size, self.output_size)
         self.attn = Attn(attn_type, hidden_size)
 
-    def forward(self, input_step, speaker, last_hidden, encoder_outputs):
-        # Note: we run this one step(word) at a time
+    def forward(self, input_seq, speakers, init_hidden, encoder_outputs):
+        seq_len = input_seq.size(0)
 
         # Get embedding of current input word
-        # shape = (1, batch_size, hidden_size)
-        embedded = self.embedding(input_step)
+        embedded = self.embedding(input_seq)
         embedded = self.embedding_dropout(embedded)
-        # shape = (1, batch_size, PERSONA_EMBEDDING_SIZE)
-        persona = self.personas(speaker)
-        # shape = (1, batch_size, hidden_size+PERSONA_EMBEDDING_SIZE)
+
+        # Expand persona to shape=(seq_len, batch_size, PERSONA_EMBEDDING_SIZE)
+        persona = self.personas(speakers)
+        persona = persona.unsqueeze(0).expand(seq_len, -1, -1)
+
+        # Concat embeddings; shape=(seq_len, batch_size, hidden_size+PERSONA_EMBEDDING_SIZE)
         features = torch.cat((embedded, persona), 2)
 
-        # Forward through GRU
-        # rnn_output shape = (1, batch_size, hidden_size)
-        # hidden shape = (n_layers*num_directions, batch_size, hidden_size)
-        rnn_output, hidden = self.decoder(features, last_hidden)
-        # Calculate attention weights from the current GRU output
-        # attn_weights shape = (batch_size, 1, max_length)
+        # Forward through RNN; rnn_output shape = (seq_len, batch_size, hidden_size)
+        rnn_output, hidden = self.decoder(features, init_hidden)
+
+        # Calculate context vector from the current RNN output; shape = (seq_len, batch_size, max_length)
         context = self.attn(rnn_output, encoder_outputs)
 
         # Concatenate weighted context vector and RNN output using Luong eq. 5
         concat_input = torch.cat((rnn_output, context), 2)
         concat_output = torch.tanh(self.concat(concat_input))
 
-        # Predict next word using Luong eq. 6
         output = self.out(concat_output)
         output = nn.functional.softmax(output, dim=2)
         return output, hidden
