@@ -3,8 +3,8 @@
 import random
 import torch
 from torch import nn
-from encoder import EncoderRNN
-from decoder import DecoderRNN
+from .encoder import EncoderRNN
+from .decoder import DecoderRNN
 
 class Seq2Seq(nn.Module):
     '''

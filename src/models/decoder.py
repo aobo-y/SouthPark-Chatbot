@@ -2,7 +2,7 @@
 
 import torch
 from torch import nn
-from attn import Attn
+from .attn import Attn
 
 class DecoderRNN(nn.Module):
     """
