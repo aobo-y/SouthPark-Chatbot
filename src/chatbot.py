@@ -9,8 +9,7 @@ import torch
 import config
 from data_util import trim_unk_data, load_pairs
 from search_decoder import GreedySearchDecoder, BeamSearchDecoder
-from seq_encoder import EncoderRNN
-from seq_decoder_persona import DecoderRNN
+from seq2seq import Seq2Seq
 from trainer import Trainer
 from evaluate import evaluateInput
 from embedding_map import EmbeddingMap
@@ -44,19 +43,14 @@ def init_word_embedding(embedding_paths):
             embedding_of_words.append([0] * embedding_len)
 
     weight = torch.FloatTensor(embedding_of_words)
-    embedding = torch.nn.Embedding.from_pretrained(weight, False)
 
-    return word_map, embedding
+    return word_map, weight
 
-def init_persona_embedding(persons, size):
+def init_persona_embedding(persons):
     person_map = EmbeddingMap(persons)
     person_map.append(config.NONE_PERSONA)
 
-    # Initialize persona embedding with 0
-    weight = torch.zeros((person_map.size(), size))
-    embedding = torch.nn.Embedding.from_pretrained(weight, False)
-
-    return person_map, embedding
+    return person_map
 
 def load_data(corpus_path, word_map, persona_map, trim=True):
     datafile = os.path.join(DIR_PATH, corpus_path)
@@ -81,55 +75,38 @@ def load_checkpoint(filename):
 
 def build_model(checkpoint):
     if checkpoint:
-        embedding_sd = checkpoint['embedding']
-        persona_sd = checkpoint['persona']
-
         word_map = EmbeddingMap()
         word_map.__dict__ = checkpoint['word_map_dict']
         person_map = EmbeddingMap()
         person_map.__dict__ = checkpoint['person_map_dict']
 
-        # Load word embeddings
-        embedding = torch.nn.Embedding.from_pretrained(embedding_sd['weight'], False)
-
-        # Load persona embeddings
-        personas = torch.nn.Embedding(person_map.size(), config.PERSONA_SIZE)
-        personas.load_state_dict(persona_sd)
-
     else:
         # Initialize word embeddings
-        word_map, embedding = init_word_embedding(config.WORD_EMBEDDING_FILES)
+        word_map, pre_we_weight = init_word_embedding(config.WORD_EMBEDDING_FILES)
 
-        # Initialize persona embedding
-        person_map, personas = init_persona_embedding(config.PERSONS, config.PERSONA_SIZE)
+        person_map = init_persona_embedding(config.PERSONS)
 
+    print(f'word embedding size {config.WORD_EMBEDDING_SIZE}, persona embedding size {config.PERSONA_EMBEDDING_SIZE}, hidden size {config.HIDDEN_SIZE}, layers {config.MODEL_LAYERS}')
 
+    word_ebd_shape = (word_map.size(), config.WORD_EMBEDDING_SIZE)
+    persona_ebd_shape = (person_map.size(), config.PERSONA_EMBEDDING_SIZE)
 
-    # make sure config is the same as init
-    # assert embedding.embedding_dim == config.HIDDEN_SIZE
-    assert personas.embedding_dim == config.PERSONA_SIZE
-
-    print('Building encoder and decoder ...')
-    print(f'wordembedding size {embedding.embedding_dim}, persona size {personas.embedding_dim}, hidden size {config.HIDDEN_SIZE}, layers {config.DECODER_N_LAYERS}')
-    # Initialize encoder & decoder models
-    encoder = EncoderRNN(embedding, config.HIDDEN_SIZE, config.ENCODER_N_LAYERS, config.ENCODER_DROPOUT_RATE, config.RNN_TYPE)
-    decoder = DecoderRNN(config.ATTN_MODEL, embedding, personas, config.HIDDEN_SIZE, word_map.size(),
-                         config.DECODER_N_LAYERS, config.DECODER_DROPOUT_RATE, config.RNN_TYPE)
+    model = Seq2Seq(word_ebd_shape, persona_ebd_shape, config.HIDDEN_SIZE, config.MODEL_LAYERS, config.MODEL_DROPOUT_RATE, config.RNN_TYPE, config.ATTN_TYPE)
 
     if checkpoint:
-        encoder.load_state_dict(checkpoint['en'])
-        decoder.load_state_dict(checkpoint['de'])
+        model.load_state_dict(checkpoint['model'])
+    else:
+        model.load_pretrained_word_ebd(pre_we_weight)
 
     # Use appropriate device
-    encoder = encoder.to(device)
-    decoder = decoder.to(device)
+    model = model.to(device)
 
-    return encoder, decoder, embedding, personas, word_map, person_map, checkpoint
-
+    return model, word_map, person_map, checkpoint
 
 
-def train(mode, encoder, decoder, embedding, personas, word_map, person_map, checkpoint):
-    trainer = Trainer(encoder, decoder, word_map, person_map, embedding, personas)
+
+def train(mode, model, word_map, person_map, checkpoint):
+    trainer = Trainer(model, word_map, person_map)
 
     if checkpoint:
         trainer.load(checkpoint)
@@ -157,25 +134,24 @@ def train(mode, encoder, decoder, embedding, personas, word_map, person_map, che
     pairs = load_data(corpus, word_map, person_map, trim_corpus)
 
     # Ensure dropout layers are in train mode
-    encoder.train()
-    decoder.train()
+    model.train()
 
     # in pretrain stage, do not update personas
-    personas.weight.requires_grad = train_persona
+    if not train_persona:
+        model.freeze_persona()
 
     trainer.train(pairs, n_iter, config.BATCH_SIZE, stage=mode)
 
 
-def chat(encoder, decoder, word_map, speaker_id):
+def chat(model, word_map, speaker_id):
     # Set dropout layers to eval mode
-    encoder.eval()
-    decoder.eval()
+    model.eval()
 
     # Initialize search module
     if config.BEAM_SEARCH_ON:
-        searcher = BeamSearchDecoder(encoder, decoder)
+        searcher = BeamSearchDecoder(model)
     else:
-        searcher = GreedySearchDecoder(encoder, decoder)
+        searcher = GreedySearchDecoder(model)
 
     # Begin chatting (uncomment and run the following line to begin)
     evaluateInput(searcher, word_map, speaker_id)
@@ -190,17 +166,17 @@ def main():
 
     checkpoint = None if not args.checkpoint else load_checkpoint(args.checkpoint)
 
-    encoder, decoder, embedding, personas, word_map, person_map, checkpoint = build_model(checkpoint)
+    model, word_map, person_map, checkpoint = build_model(checkpoint)
 
     if args.mode == 'pretrain' or args.mode == 'finetune':
-        train(args.mode, encoder, decoder, embedding, personas, word_map, person_map, checkpoint)
+        train(args.mode, model, word_map, person_map, checkpoint)
 
     elif args.mode == 'chat':
         speaker_name = args.speaker
         if person_map.has(speaker_name):
             print('Selected speaker:', speaker_name)
             speaker_id = person_map.get_index(speaker_name)
-            chat(encoder, decoder, word_map, speaker_id)
+            chat(model, word_map, speaker_id)
         else:
             print('Invalid speaker. Possible speakers:', person_map.tokens)
 
@@ -210,15 +186,14 @@ def telegram_init():
     args = parser.parse_args()
     config.USE_PERSONA = True
     checkpoint = None if not args.checkpoint else load_checkpoint(args.checkpoint)
-    encoder, decoder, embedding, personas, word_map, person_map, _ = build_model(checkpoint)
+    model, word_map, person_map, _ = build_model(checkpoint)
     # Set dropout layers to eval mode
-    encoder.eval()
-    decoder.eval()
+    model.eval()
     # Initialize search module
     if config.BEAM_SEARCH_ON:
-        searcher = BeamSearchDecoder(encoder, decoder)
+        searcher = BeamSearchDecoder(model)
     else:
-        searcher = GreedySearchDecoder(encoder, decoder)
+        searcher = GreedySearchDecoder(model)
     return searcher, word_map, person_map
 
 

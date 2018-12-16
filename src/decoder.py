@@ -7,12 +7,13 @@ import torch
 from torch import nn
 from attn import Attn
 
-class LuongAttnDecoderRNN(nn.Module):
+class DecoderRNN(nn.Module):
     """
     This means that our embedded word tensor and GRU output will both have shape (1, batch_size, hidden_size).
 
     Inputs:
         input_step: one time step (one word) of input sequence batch; shape=(1, batch_size)
+        speakers: speaker id, shape = (1, batch_size)
         last_hidden: final hidden layer of GRU; shape=(n_layers x num_directions, batch_size, hidden_size)
         encoder_outputs: encoder model’s output; shape=(max_length, batch_size, hidden_size)
 
@@ -22,10 +23,13 @@ class LuongAttnDecoderRNN(nn.Module):
         hidden: final hidden state of GRU; shape=(n_layers x num_directions, batch_size, hidden_size)
     """
 
-    def __init__(self, attn_model, embedding, hidden_size, output_size, n_layers=1, dropout=0.5):
-        super(LuongAttnDecoderRNN, self).__init__()
-        self.attn_model = attn_model
+    def __init__(self, embedding, personas, hidden_size, output_size,
+                 n_layers, dropout, rnn_type, attn_type):
+        super(DecoderRNN, self).__init__()
+        self.attn_type = attn_type
+
         self.hidden_size = hidden_size
+        self.input_size = embedding.embedding_dim + personas.embedding_dim
         self.output_size = output_size
         self.n_layers = n_layers
         self.dropout = dropout
@@ -33,23 +37,34 @@ class LuongAttnDecoderRNN(nn.Module):
         # Define layers
         self.embedding = embedding
         self.embedding_dropout = nn.Dropout(dropout)
-        self.gru = nn.GRU(hidden_size, hidden_size, n_layers,
-                          dropout=(0 if n_layers == 1 else dropout))
-        self.concat = nn.Linear(hidden_size*2, hidden_size)
-        self.out = nn.Linear(hidden_size, output_size)
-        self.attn = Attn(attn_model, hidden_size)
+        self.personas = personas
 
-    def forward(self, input_step, last_hidden, encoder_outputs):
+        if rnn_type == 'LSTM':
+            self.decoder = nn.LSTM(self.input_size, hidden_size, n_layers,
+                                   dropout=(0 if n_layers == 1 else dropout))
+        else:
+            self.decoder = nn.GRU(self.input_size, hidden_size, n_layers,
+                                  dropout=(0 if n_layers == 1 else dropout))
+        self.concat = nn.Linear(hidden_size * 2, hidden_size)
+        self.out = nn.Linear(hidden_size, self.output_size)
+        self.attn = Attn(attn_type, hidden_size)
+
+    def forward(self, input_step, speaker, last_hidden, encoder_outputs):
         # Note: we run this one step(word) at a time
 
         # Get embedding of current input word
         # shape = (1, batch_size, hidden_size)
         embedded = self.embedding(input_step)
         embedded = self.embedding_dropout(embedded)
+        # shape = (1, batch_size, PERSONA_EMBEDDING_SIZE)
+        persona = self.personas(speaker)
+        # shape = (1, batch_size, hidden_size+PERSONA_EMBEDDING_SIZE)
+        features = torch.cat((embedded, persona), 2)
+
         # Forward through GRU
         # rnn_output shape = (1, batch_size, hidden_size)
         # hidden shape = (n_layers*num_directions, batch_size, hidden_size)
-        rnn_output, hidden = self.gru(embedded, last_hidden)
+        rnn_output, hidden = self.decoder(features, last_hidden)
         # Calculate attention weights from the current GRU output
         # attn_weights shape = (batch_size, 1, max_length)
         attn_weights = self.attn(rnn_output, encoder_outputs)
