@@ -1,7 +1,4 @@
-"""
-Encoder
-Our encoder is a multi-layered Gated Recurrent Unit, invented by Cho et al. in 2014.
-"""
+''' Encoder '''
 
 import torch
 from torch import nn
@@ -12,9 +9,8 @@ class EncoderRNN(nn.Module):
 
     Inputs:
         input_seq: batch of input sentences; shape=(max_length, batch_size)
-        input_lengths: list of sentence lengths corresponding to each sentence in the batch;
-                                     shape=(batch_size)
-        hidden: hidden state; shape=(n_layers x num_directions, batch_size, hidden_size)
+        input_lengths: list of sentence lengths corresponding to each sentence in the batch; shape=(batch_size)
+        init_hidden: initial hidden state; shape=(n_layers x num_directions, batch_size, hidden_size)
 
     Outputs:
         outputs: output features from the last hidden layer of the GRU (sum of bidirectional outputs);
@@ -44,22 +40,23 @@ class EncoderRNN(nn.Module):
                               dropout=(0 if n_layers == 1 else dropout),
                               bidirectional=True)
 
-    def forward(self, input_seq, input_length, hidden=None):
+    def forward(self, input_seq, input_length, init_hidden=None):
         # Convert word indexes to embeddings
-        # shape = (max_length, batch_size, hidden_size)
         embedded = self.embedding(input_seq)
+
         # Pack padded batch of sequences for RNN module
-        # shape = (max_length, batch_size, hidden_size)
         packed = torch.nn.utils.rnn.pack_padded_sequence(embedded, input_length)
+
         # Forward pass through GRU
         # outputs shape = (max_length, batch_size, hidden_size*num_directions)
         # hidden shape = (n_layers*num_directions, batch_size, hidden_size)
-        outputs, hidden = self.encoder(packed, hidden)
-        # Unpack padding
-        # shape = (max_length, batch_size, hidden_size*num_directions)
+        outputs, hidden = self.encoder(packed, init_hidden)
+
+        # Unpack padding; shape = (max_length, batch_size, hidden_size*num_directions)
         outputs, _ = torch.nn.utils.rnn.pad_packed_sequence(outputs)
+
         # Sum bidirectional GRU outputs
         # shape = (max_length, batch_size, hidden_size)
-        outputs = outputs[:, :, :self.hidden_size]+outputs[:, :, self.hidden_size:]
-        # Return output and final hidden state
+        outputs = outputs[:, :, :self.hidden_size] + outputs[:, :, self.hidden_size:]
+
         return outputs, hidden

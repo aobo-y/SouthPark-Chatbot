@@ -178,8 +178,8 @@ def batch2TrainData(pair_batch, word_map):
     inp, lengths = input_var(input_batch, word_map)
     output, mask, max_target_len = output_var(output_batch, word_map)
 
-    # Return speaker_variable tensor with shape=(1, batch_size)
-    speaker_variable = torch.LongTensor([speaker_batch])
+    # Return speaker_variable tensor with shape=(batch_size)
+    speaker_variable = torch.LongTensor(speaker_batch)
     return inp, lengths, output, mask, max_target_len, speaker_variable
 
 

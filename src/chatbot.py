@@ -9,7 +9,7 @@ import torch
 import config
 from data_util import trim_unk_data, load_pairs
 from search_decoder import GreedySearchDecoder, BeamSearchDecoder
-from seq2seq import Seq2Seq
+from models import Seq2Seq
 from trainer import Trainer
 from evaluate import evaluateInput
 from embedding_map import EmbeddingMap
