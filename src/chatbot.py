@@ -178,7 +178,7 @@ def main():
         else:
             print('Invalid speaker. Possible speakers:', person_map.tokens)
 
-def telegram_init():
+def init():
     parser = argparse.ArgumentParser()
     parser.add_argument('-cp', '--checkpoint')
     args = parser.parse_args()
@@ -187,7 +187,7 @@ def telegram_init():
     checkpoint_mng = CheckpointManager(SAVE_PATH)
     checkpoint = None if not args.checkpoint else checkpoint_mng.load(args.checkpoint, device)
 
-    model, word_map, person_map, _ = build_model(checkpoint)
+    model, word_map, person_map = build_model(checkpoint)
     # Set dropout layers to eval mode
     model.eval()
     # Initialize search module
