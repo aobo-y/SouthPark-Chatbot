@@ -7,6 +7,7 @@ import argparse
 import torch
 
 import config
+from utils import CheckpointManager
 from data_util import trim_unk_data, load_pairs
 from search_decoder import GreedySearchDecoder, BeamSearchDecoder
 from models import Seq2Seq
@@ -17,6 +18,8 @@ from embedding_map import EmbeddingMap
 DIR_PATH = os.path.dirname(__file__)
 USE_CUDA = torch.cuda.is_available()
 device = torch.device('cuda' if USE_CUDA else 'cpu')
+
+SAVE_PATH = os.path.join(DIR_PATH, config.SAVE_DIR, config.MODEL_NAME)
 
 def init_word_embedding(embedding_paths):
     print('Init word embedding from: ', ', '.join(embedding_paths))
@@ -62,23 +65,10 @@ def load_data(corpus_path, word_map, persona_map, trim=True):
 
     return pairs
 
-def load_checkpoint(filename):
-    print('Load checkpoint file:', filename)
-
-    checkpoint_folder = os.path.join(DIR_PATH, config.SAVE_DIR, config.MODEL_NAME)
-    load_filepath = os.path.join(checkpoint_folder, f'{config.ENCODER_N_LAYERS}-{config.DECODER_N_LAYERS}_{config.HIDDEN_SIZE}', f'{filename}.tar')
-
-    checkpoint = torch.load(load_filepath, map_location=device)
-
-    # If loading a model trained on GPU to current Device
-    return checkpoint
-
 def build_model(checkpoint):
     if checkpoint:
-        word_map = EmbeddingMap()
-        word_map.__dict__ = checkpoint['word_map_dict']
-        person_map = EmbeddingMap()
-        person_map.__dict__ = checkpoint['person_map_dict']
+        word_map = checkpoint['word_map']
+        person_map = checkpoint['person_map']
 
     else:
         # Initialize word embeddings
@@ -101,15 +91,17 @@ def build_model(checkpoint):
     # Use appropriate device
     model = model.to(device)
 
-    return model, word_map, person_map, checkpoint
+    return model, word_map, person_map
 
 
 
-def train(mode, model, word_map, person_map, checkpoint):
-    trainer = Trainer(model, word_map, person_map)
+def train(mode, model, word_map, person_map, checkpoint, checkpoint_mng):
+    trainer = Trainer(model, word_map, person_map, checkpoint_mng)
 
     if checkpoint:
         trainer.load(checkpoint)
+    else:
+        checkpoint_mng.save_meta(word_map=word_map, person_map=person_map)
 
     if mode == 'pretrain':
         corpus = config.PRETRAIN_CORPUS
@@ -164,12 +156,18 @@ def main():
     parser.add_argument('-cp', '--checkpoint')
     args = parser.parse_args()
 
-    checkpoint = None if not args.checkpoint else load_checkpoint(args.checkpoint)
+    print('Saving path:', SAVE_PATH)
+    checkpoint_mng = CheckpointManager(SAVE_PATH)
 
-    model, word_map, person_map, checkpoint = build_model(checkpoint)
+    checkpoint = None
+    if args.checkpoint:
+        print('Load checkpoint:', args.checkpoint)
+        checkpoint = checkpoint_mng.load(args.checkpoint, device)
+
+    model, word_map, person_map = build_model(checkpoint)
 
     if args.mode == 'pretrain' or args.mode == 'finetune':
-        train(args.mode, model, word_map, person_map, checkpoint)
+        train(args.mode, model, word_map, person_map, checkpoint, checkpoint_mng)
 
     elif args.mode == 'chat':
         speaker_name = args.speaker
@@ -185,7 +183,10 @@ def telegram_init():
     parser.add_argument('-cp', '--checkpoint')
     args = parser.parse_args()
     config.USE_PERSONA = True
-    checkpoint = None if not args.checkpoint else load_checkpoint(args.checkpoint)
+
+    checkpoint_mng = CheckpointManager(SAVE_PATH)
+    checkpoint = None if not args.checkpoint else checkpoint_mng.load(args.checkpoint, device)
+
     model, word_map, person_map, _ = build_model(checkpoint)
     # Set dropout layers to eval mode
     model.eval()
@@ -197,5 +198,5 @@ def telegram_init():
     return searcher, word_map, person_map
 
 
-if __name__ =='__main__':
+if __name__ == '__main__':
     main()

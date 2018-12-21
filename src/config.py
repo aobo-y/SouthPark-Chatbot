@@ -6,7 +6,7 @@ FINETUNE_CORPUS = "data/persona_data/train.txt"
 
 # checkpoints relevant
 SAVE_DIR = 'checkpoints'
-MODEL_NAME = 'dwy_persona_based'
+MODEL_NAME = 'default'
 SAVE_EVERY = 1000           # save the checkpoint every x iterations
 
 # Iterations of training

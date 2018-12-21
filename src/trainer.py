@@ -34,8 +34,10 @@ def mask_nll_loss(inp, target, mask):
 class Trainer:
     '''Trainer to train the seq2seq model'''
 
-    def __init__(self, model, word_map, person_map):
+    def __init__(self, model, word_map, person_map, checkpoint_mng):
         self.model = model
+
+        self.checkpoint_mng = checkpoint_mng
 
         self.word_map = word_map
         self.person_map = person_map
@@ -46,11 +48,11 @@ class Trainer:
         # trained iteration
         self.trained_iteration = 0
 
-    def log(self, string):
+    def log(self, *args):
         '''formatted log output for training'''
 
         time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        print(f'{time}\t{string}')
+        print(f'{time}   ', *args)
 
     def load(self, checkpoint):
         '''load checkpoint'''
@@ -153,18 +155,8 @@ class Trainer:
 
             # Save checkpoint
             if iteration % config.SAVE_EVERY == 0:
-                checkpoint_folder = os.path.join(DIR_PATH, config.SAVE_DIR, config.MODEL_NAME)
-
-                directory = os.path.join(checkpoint_folder, f'{config.ENCODER_N_LAYERS}-{config.DECODER_N_LAYERS}_{config.HIDDEN_SIZE}')
-
-                if not os.path.exists(directory):
-                    os.makedirs(directory)
-
-                filename = f'{stage}_{iteration}.tar'
-
-                filepath = os.path.join(directory, filename)
-
-                torch.save({
+                cp_name = f'{stage}_{iteration}'
+                self.checkpoint_mng.save(cp_name, {
                     'iteration': iteration,
                     'loss': loss,
                     'stage': stage,
@@ -173,7 +165,7 @@ class Trainer:
                     'de_opt': self.decoder_optimizer.state_dict(),
                     'word_map_dict': self.word_map.__dict__,
                     'person_map_dict': self.person_map.__dict__,
-                }, filepath)
+                })
 
-                self.log(f'Save checkpoin {filename}')
+                self.log('Save checkpoint:', cp_name)
 
