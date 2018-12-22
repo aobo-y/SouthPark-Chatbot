@@ -10,7 +10,7 @@ import torch
 from torch import optim
 import config
 
-from data_util import batch2TrainData, data_2_indexes
+from data_util import batch2TrainData
 
 DIR_PATH = os.path.dirname(__file__)
 
@@ -34,13 +34,12 @@ def mask_nll_loss(inp, target, mask):
 class Trainer:
     '''Trainer to train the seq2seq model'''
 
-    def __init__(self, model, voc, persons, checkpoint_mng):
+    def __init__(self, model, voc, checkpoint_mng):
         self.model = model
 
         self.checkpoint_mng = checkpoint_mng
 
         self.voc = voc
-        self.persons = persons
 
         self.encoder_optimizer = optim.Adam(model.encoder.parameters(), lr=config.LR)
         self.decoder_optimizer = optim.Adam(model.decoder.parameters(), lr=config.LR * config.DECODER_LR)
@@ -121,14 +120,9 @@ class Trainer:
         After loading a checkpoint, we will be able to use the model parameters to run inference,
         or we can continue training right where we left off.
         """
-        # convert sentence & speaker name to indexes
-        index_pair = [data_2_indexes(pair, self.voc, self.persons) for pair in pairs]
-
-        batch_size = config.BATCH_SIZE
 
         # Load batches for each iteration
-        training_batches = [batch2TrainData([random.choice(index_pair) for _ in range(batch_size)], self.voc)
-                            for _ in range(n_iteration)]
+        training_batches = [batch2TrainData([random.choice(pairs) for _ in range(batch_size)], self.voc.pad_idx) for _ in range(n_iteration)]
 
         # Initializations
         print_loss = 0

@@ -143,29 +143,25 @@ def binaryMatrix(l, fillvalue):
     return m
 
 # Returns padded input sequence tensor and lengths
-def input_var(input_batch, voc):
-    fillvalue = voc.pad_idx
-
+def input_var(input_batch, padding):
     lengths = torch.tensor([len(indexes) for indexes in input_batch])
-    pad_list = zeroPadding(input_batch, fillvalue)
+    pad_list = zeroPadding(input_batch, padding)
 
     pad_var = torch.LongTensor(pad_list)
     return pad_var, lengths
 
 # Returns padded target sequence tensor, padding mask, and max target length
-def output_var(indexes_batch, voc):
-    fillvalue = voc.pad_idx
-
+def output_var(indexes_batch, padding):
     max_target_len = max([len(indexes) for indexes in indexes_batch])
-    pad_list = zeroPadding(indexes_batch, fillvalue)
-    mask = binaryMatrix(pad_list, fillvalue)
+    pad_list = zeroPadding(indexes_batch, padding)
+    mask = binaryMatrix(pad_list, padding)
     mask = torch.ByteTensor(mask)
 
     pad_var = torch.LongTensor(pad_list)
     return pad_var, mask, max_target_len
 
 # Returns all items for a given batch of pairs
-def batch2TrainData(pair_batch, voc):
+def batch2TrainData(pair_batch, padding):
     # sort by input length, no idea why
     pair_batch.sort(key=lambda x: len(x[0]), reverse=True)
 
@@ -173,8 +169,8 @@ def batch2TrainData(pair_batch, voc):
     output_batch = [pair[1] for pair in pair_batch]
     speaker_batch = [pair[2] for pair in pair_batch]
 
-    inp, lengths = input_var(input_batch, voc)
-    output, mask, max_target_len = output_var(output_batch, voc)
+    inp, lengths = input_var(input_batch, padding)
+    output, mask, max_target_len = output_var(output_batch, padding)
 
     # Return speaker_variable tensor with shape=(batch_size)
     speaker_variable = torch.LongTensor(speaker_batch)

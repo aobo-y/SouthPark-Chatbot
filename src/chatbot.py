@@ -8,7 +8,7 @@ import torch
 
 import config
 from utils import CheckpointManager, Vocabulary, Persons
-from data_util import trim_unk_data, load_pairs
+from data_util import trim_unk_data, load_pairs, data_2_indexes
 from search_decoder import GreedySearchDecoder, BeamSearchDecoder
 from models import Seq2Seq
 from trainer import Trainer
@@ -46,15 +46,15 @@ def init_word_embedding(embedding_paths):
 
     return voc, weight
 
-def load_data(corpus_path, voc, persona_map, trim=True):
+def load_data(corpus_path, voc, persons, trim=True):
     datafile = os.path.join(DIR_PATH, corpus_path)
     pairs = load_pairs(datafile)
 
     # Trim pairs with words not in embedding
     if trim:
-        pairs = trim_unk_data(pairs, voc, persona_map)
+        pairs = trim_unk_data(pairs, voc, persons)
 
-    return pairs
+    return [data_2_indexes(pair, voc, persons) for pair in pairs]
 
 def build_model(checkpoint):
     if checkpoint:
@@ -86,7 +86,7 @@ def build_model(checkpoint):
 
 
 def train(mode, model, voc, persons, checkpoint, checkpoint_mng):
-    trainer = Trainer(model, voc, persons, checkpoint_mng)
+    trainer = Trainer(model, voc, checkpoint_mng)
 
     if checkpoint:
         trainer.load(checkpoint)
