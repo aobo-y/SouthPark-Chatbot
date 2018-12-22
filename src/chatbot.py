@@ -7,13 +7,12 @@ import argparse
 import torch
 
 import config
-from utils import CheckpointManager
+from utils import CheckpointManager, Vocabulary, Persons
 from data_util import trim_unk_data, load_pairs
 from search_decoder import GreedySearchDecoder, BeamSearchDecoder
 from models import Seq2Seq
 from trainer import Trainer
 from evaluate import evaluateInput
-from embedding_map import EmbeddingMap
 
 DIR_PATH = os.path.dirname(__file__)
 USE_CUDA = torch.cuda.is_available()
@@ -33,53 +32,44 @@ def init_word_embedding(embedding_paths):
 
     tokens_of_lines = [l.strip().split(' ') for l in lines]
     words = [l[0] for l in tokens_of_lines]
-    embedding_of_words = [[float(str_emb) for str_emb in l[1:]] for l in tokens_of_lines]
+    weight = [[float(str_emb) for str_emb in l[1:]] for l in tokens_of_lines]
 
-    word_map = EmbeddingMap(words)
-    print(f'Load {word_map.size()} word embedding')
+    voc = Vocabulary(words)
+    print('Vocabulary size:', voc.size())
 
-    for special_token in config.SPECIAL_WORD_EMBEDDING_TOKENS.values():
-        if not word_map.has(special_token):
-            word_map.append(special_token)
-            # also init the embedding for special token
-            embedding_len = len(embedding_of_words[0])
-            embedding_of_words.append([0] * embedding_len)
+    # also init the embedding for special tokens
+    while len(weight) < voc.size():
+        embedding_len = len(weight[0])
+        weight.append([0] * embedding_len)
 
-    weight = torch.FloatTensor(embedding_of_words)
+    weight = torch.FloatTensor(weight)
 
-    return word_map, weight
+    return voc, weight
 
-def init_persona_embedding(persons):
-    person_map = EmbeddingMap(persons)
-    person_map.append(config.NONE_PERSONA)
-
-    return person_map
-
-def load_data(corpus_path, word_map, persona_map, trim=True):
+def load_data(corpus_path, voc, persona_map, trim=True):
     datafile = os.path.join(DIR_PATH, corpus_path)
     pairs = load_pairs(datafile)
 
     # Trim pairs with words not in embedding
     if trim:
-        pairs = trim_unk_data(pairs, word_map, persona_map)
+        pairs = trim_unk_data(pairs, voc, persona_map)
 
     return pairs
 
 def build_model(checkpoint):
     if checkpoint:
-        word_map = checkpoint['word_map']
-        person_map = checkpoint['person_map']
+        voc = checkpoint['voc']
+        persons = checkpoint['persons']
 
     else:
         # Initialize word embeddings
-        word_map, pre_we_weight = init_word_embedding(config.WORD_EMBEDDING_FILES)
-
-        person_map = init_persona_embedding(config.PERSONS)
+        voc, pre_we_weight = init_word_embedding(config.WORD_EMBEDDING_FILES)
+        persons = Persons(config.PERSONS)
 
     print(f'word embedding size {config.WORD_EMBEDDING_SIZE}, persona embedding size {config.PERSONA_EMBEDDING_SIZE}, hidden size {config.HIDDEN_SIZE}, layers {config.MODEL_LAYERS}')
 
-    word_ebd_shape = (word_map.size(), config.WORD_EMBEDDING_SIZE)
-    persona_ebd_shape = (person_map.size(), config.PERSONA_EMBEDDING_SIZE)
+    word_ebd_shape = (voc.size(), config.WORD_EMBEDDING_SIZE)
+    persona_ebd_shape = (persons.size(), config.PERSONA_EMBEDDING_SIZE)
 
     model = Seq2Seq(word_ebd_shape, persona_ebd_shape, config.HIDDEN_SIZE, config.MODEL_LAYERS, config.MODEL_DROPOUT_RATE, config.RNN_TYPE, config.ATTN_TYPE)
 
@@ -91,17 +81,17 @@ def build_model(checkpoint):
     # Use appropriate device
     model = model.to(device)
 
-    return model, word_map, person_map
+    return model, voc, persons
 
 
 
-def train(mode, model, word_map, person_map, checkpoint, checkpoint_mng):
-    trainer = Trainer(model, word_map, person_map, checkpoint_mng)
+def train(mode, model, voc, persons, checkpoint, checkpoint_mng):
+    trainer = Trainer(model, voc, persons, checkpoint_mng)
 
     if checkpoint:
         trainer.load(checkpoint)
     else:
-        checkpoint_mng.save_meta(word_map=word_map, person_map=person_map)
+        checkpoint_mng.save_meta(voc=voc, persons=persons)
 
     if mode == 'pretrain':
         corpus = config.PRETRAIN_CORPUS
@@ -123,7 +113,7 @@ def train(mode, model, word_map, person_map, checkpoint, checkpoint_mng):
         if 'stage' not in checkpoint or checkpoint['stage'] != 'finetune':
             trainer.reset_iter()
 
-    pairs = load_data(corpus, word_map, person_map, trim_corpus)
+    pairs = load_data(corpus, voc, persons, trim_corpus)
 
     # Ensure dropout layers are in train mode
     model.train()
@@ -135,7 +125,7 @@ def train(mode, model, word_map, person_map, checkpoint, checkpoint_mng):
     trainer.train(pairs, n_iter, config.BATCH_SIZE, stage=mode)
 
 
-def chat(model, word_map, speaker_id):
+def chat(model, voc, speaker_id):
     # Set dropout layers to eval mode
     model.eval()
 
@@ -146,7 +136,7 @@ def chat(model, word_map, speaker_id):
         searcher = GreedySearchDecoder(model)
 
     # Begin chatting (uncomment and run the following line to begin)
-    evaluateInput(searcher, word_map, speaker_id)
+    evaluateInput(searcher, voc, speaker_id)
 
 
 def main():
@@ -164,19 +154,19 @@ def main():
         print('Load checkpoint:', args.checkpoint)
         checkpoint = checkpoint_mng.load(args.checkpoint, device)
 
-    model, word_map, person_map = build_model(checkpoint)
+    model, voc, persons = build_model(checkpoint)
 
     if args.mode == 'pretrain' or args.mode == 'finetune':
-        train(args.mode, model, word_map, person_map, checkpoint, checkpoint_mng)
+        train(args.mode, model, voc, persons, checkpoint, checkpoint_mng)
 
     elif args.mode == 'chat':
         speaker_name = args.speaker
-        if person_map.has(speaker_name):
+        if persons.has(speaker_name):
             print('Selected speaker:', speaker_name)
-            speaker_id = person_map.get_index(speaker_name)
-            chat(model, word_map, speaker_id)
+            speaker_id = persons.get_index(speaker_name)
+            chat(model, voc, speaker_id)
         else:
-            print('Invalid speaker. Possible speakers:', person_map.tokens)
+            print('Invalid speaker. Possible speakers:', persons.tokens)
 
 def init():
     parser = argparse.ArgumentParser()
@@ -187,7 +177,7 @@ def init():
     checkpoint_mng = CheckpointManager(SAVE_PATH)
     checkpoint = None if not args.checkpoint else checkpoint_mng.load(args.checkpoint, device)
 
-    model, word_map, person_map = build_model(checkpoint)
+    model, voc, persons = build_model(checkpoint)
     # Set dropout layers to eval mode
     model.eval()
     # Initialize search module
@@ -195,7 +185,7 @@ def init():
         searcher = BeamSearchDecoder(model)
     else:
         searcher = GreedySearchDecoder(model)
-    return searcher, word_map, person_map
+    return searcher, voc, persons
 
 
 if __name__ == '__main__':

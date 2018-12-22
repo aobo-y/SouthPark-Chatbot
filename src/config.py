@@ -44,17 +44,9 @@ TF_RATE_DECAY_FACTOR = 15 * 10 ** 3      # k in the inverse sigmoid decay func o
 # Parameters for processing the dataset
 MAX_LENGTH = 20  # Maximum sentence length to consider
 
-SPECIAL_WORD_EMBEDDING_TOKENS = {
-    'PAD': '<pad>', # Padding token
-    'SOS': '<sos>', # Start of Sentence token
-    'EOS': '<eos>', # End of Sentence token
-    'UNK': '<unk>'  # pretrained word embedding usually has this
-}
 
 PERSONS = ['kyle', 'cartman', 'stan', 'chef', 'kenny', 'mr. garrison',
            'randy', 'sharon', 'gerald', 'butters']
-
-NONE_PERSONA = '<none>'
 
 # Word Embedding
 WORD_EMBEDDING_FILES = [

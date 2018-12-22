@@ -85,7 +85,7 @@ def load_pairs(datafile):
     return pairs
 
 
-def trim_unk_data(pairs, word_map, person_map):
+def trim_unk_data(pairs, voc, person_map):
     # Filter out pairs with trimmed words
     keep_pairs = []
 
@@ -97,12 +97,12 @@ def trim_unk_data(pairs, word_map, person_map):
         keep_output = True
         # Check input sentence
         for word in input_sentence.split(' '):
-            if not word_map.has(word):
+            if not voc.has(word):
                 keep_input = False
                 break
         # Check output sentence
         for word in output_sentence.split(' '):
-            if not word_map.has(word):
+            if not voc.has(word):
                 keep_output = False
                 break
 
@@ -118,14 +118,14 @@ def trim_unk_data(pairs, word_map, person_map):
     print("Trimmed from {} pairs to {}, {:.4f} of total".format(len(pairs), len(keep_pairs), len(keep_pairs) / len(pairs)))
     return keep_pairs
 
-def indexes_from_sentence(sentence, word_map):
-    unk = config.SPECIAL_WORD_EMBEDDING_TOKENS['UNK']
-    eos = config.SPECIAL_WORD_EMBEDDING_TOKENS['EOS']
+def indexes_from_sentence(sentence, voc):
+    unk = voc.unk
+    eos = voc.eos
 
-    tokens = [word if word_map.has(word) else unk for word in sentence.split(' ')]
+    tokens = [word if voc.has(word) else unk for word in sentence.split(' ')]
     tokens.append(eos)
 
-    return [word_map.get_index(token) for token in tokens]
+    return [voc.get_index(token) for token in tokens]
 
 
 def zeroPadding(l, fillvalue):
@@ -143,9 +143,8 @@ def binaryMatrix(l, fillvalue):
     return m
 
 # Returns padded input sequence tensor and lengths
-def input_var(input_batch, word_map):
-    pad = config.SPECIAL_WORD_EMBEDDING_TOKENS['PAD']
-    fillvalue = word_map.get_index(pad)
+def input_var(input_batch, voc):
+    fillvalue = voc.pad_idx
 
     lengths = torch.tensor([len(indexes) for indexes in input_batch])
     pad_list = zeroPadding(input_batch, fillvalue)
@@ -154,9 +153,8 @@ def input_var(input_batch, word_map):
     return pad_var, lengths
 
 # Returns padded target sequence tensor, padding mask, and max target length
-def output_var(indexes_batch, word_map):
-    pad = config.SPECIAL_WORD_EMBEDDING_TOKENS['PAD']
-    fillvalue = word_map.get_index(pad)
+def output_var(indexes_batch, voc):
+    fillvalue = voc.pad_idx
 
     max_target_len = max([len(indexes) for indexes in indexes_batch])
     pad_list = zeroPadding(indexes_batch, fillvalue)
@@ -167,7 +165,7 @@ def output_var(indexes_batch, word_map):
     return pad_var, mask, max_target_len
 
 # Returns all items for a given batch of pairs
-def batch2TrainData(pair_batch, word_map):
+def batch2TrainData(pair_batch, voc):
     # sort by input length, no idea why
     pair_batch.sort(key=lambda x: len(x[0]), reverse=True)
 
@@ -175,19 +173,19 @@ def batch2TrainData(pair_batch, word_map):
     output_batch = [pair[1] for pair in pair_batch]
     speaker_batch = [pair[2] for pair in pair_batch]
 
-    inp, lengths = input_var(input_batch, word_map)
-    output, mask, max_target_len = output_var(output_batch, word_map)
+    inp, lengths = input_var(input_batch, voc)
+    output, mask, max_target_len = output_var(output_batch, voc)
 
     # Return speaker_variable tensor with shape=(batch_size)
     speaker_variable = torch.LongTensor(speaker_batch)
     return inp, lengths, output, mask, max_target_len, speaker_variable
 
 
-def data_2_indexes(pair, word_map, person_map):
-    speaker = pair[2] if len(pair) == 3 else config.NONE_PERSONA
+def data_2_indexes(pair, voc, persons):
+    speaker = pair[2] if len(pair) == 3 else persons.none
 
     return [
-        indexes_from_sentence(pair[0], word_map),
-        indexes_from_sentence(pair[1], word_map),
-        person_map.get_index(speaker)
+        indexes_from_sentence(pair[0], voc),
+        indexes_from_sentence(pair[1], voc),
+        persons.get_index(speaker)
     ]

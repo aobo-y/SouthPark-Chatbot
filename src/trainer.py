@@ -34,13 +34,13 @@ def mask_nll_loss(inp, target, mask):
 class Trainer:
     '''Trainer to train the seq2seq model'''
 
-    def __init__(self, model, word_map, person_map, checkpoint_mng):
+    def __init__(self, model, voc, persons, checkpoint_mng):
         self.model = model
 
         self.checkpoint_mng = checkpoint_mng
 
-        self.word_map = word_map
-        self.person_map = person_map
+        self.voc = voc
+        self.persons = persons
 
         self.encoder_optimizer = optim.Adam(model.encoder.parameters(), lr=config.LR)
         self.decoder_optimizer = optim.Adam(model.decoder.parameters(), lr=config.LR * config.DECODER_LR)
@@ -78,7 +78,7 @@ class Trainer:
         input_var, lengths, target_var, mask, max_target_len, speaker_var = training_batch
 
         # target var start with sos
-        sos = self.word_map.get_index(config.SPECIAL_WORD_EMBEDDING_TOKENS['SOS'])
+        sos = self.voc.sos_idx
         batch_size = target_var.size(1)
         start_tensor = torch.full((1, batch_size), sos, dtype=torch.long)
         target_var = torch.cat((start_tensor, target_var))
@@ -122,12 +122,12 @@ class Trainer:
         or we can continue training right where we left off.
         """
         # convert sentence & speaker name to indexes
-        index_pair = [data_2_indexes(pair, self.word_map, self.person_map) for pair in pairs]
+        index_pair = [data_2_indexes(pair, self.voc, self.persons) for pair in pairs]
 
         batch_size = config.BATCH_SIZE
 
         # Load batches for each iteration
-        training_batches = [batch2TrainData([random.choice(index_pair) for _ in range(batch_size)], self.word_map)
+        training_batches = [batch2TrainData([random.choice(index_pair) for _ in range(batch_size)], self.voc)
                             for _ in range(n_iteration)]
 
         # Initializations
@@ -162,9 +162,7 @@ class Trainer:
                     'stage': stage,
                     'model': self.model.state_dict(),
                     'en_opt': self.encoder_optimizer.state_dict(),
-                    'de_opt': self.decoder_optimizer.state_dict(),
-                    'word_map_dict': self.word_map.__dict__,
-                    'person_map_dict': self.person_map.__dict__,
+                    'de_opt': self.decoder_optimizer.state_dict()
                 })
 
                 self.log('Save checkpoint:', cp_name)
