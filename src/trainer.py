@@ -121,21 +121,23 @@ class Trainer:
         or we can continue training right where we left off.
         """
 
+        # Training loop
+        start_iteration = self.trained_iteration + 1
+
         # Initializations
         training_batches = []
         batch_idx = 0
 
         print_loss = 0
 
-        # Training loop
-        start_iteration = self.trained_iteration + 1
-
         self.log(f'Start training from iteration {start_iteration} to {n_iteration}...')
 
         for iteration in range(start_iteration, n_iteration + 1):
-            # prepare 1000 batches each time
-            if batch_idx not in training_batches:
-                training_batches = [batch2TrainData([random.choice(pairs) for _ in range(batch_size)], self.voc.pad_idx) for _ in range(1000)]
+            # prepare batches while all used
+            if batch_idx >= len(training_batches):
+                # maximum batches once to prepare is 1000
+                batches_len = min(n_iteration - iteration + 1, 1000)
+                training_batches = [batch2TrainData([random.choice(pairs) for _ in range(batch_size)], self.voc.pad_idx) for _ in range(batches_len)]
                 batch_idx = 0
 
             training_batch = training_batches[batch_idx]
