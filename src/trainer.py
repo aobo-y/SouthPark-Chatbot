@@ -53,7 +53,7 @@ class Trainer:
         time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         print(f'{time}   ', *args)
 
-    def load(self, checkpoint):
+    def resume(self, checkpoint):
         '''load checkpoint'''
 
         self.trained_iteration = checkpoint['iteration']

@@ -89,7 +89,7 @@ def train(mode, model, voc, persons, checkpoint, checkpoint_mng):
     trainer = Trainer(model, voc, checkpoint_mng)
 
     if checkpoint:
-        trainer.load(checkpoint)
+        trainer.resume(checkpoint)
     else:
         checkpoint_mng.save_meta(voc=voc, persons=persons)
 
