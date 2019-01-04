@@ -6,6 +6,7 @@ import sys
 import os
 sys.path.insert(0, '../src/')
 import chatbot
+from chatbot import load_checkpoint
 import bleu
 import evaluate
 from search_decoder import GreedySearchDecoder, BeamSearchDecoder
@@ -33,15 +34,16 @@ def read_config(file_path):
     return json_ob
 
 def load_model(configs):
-    voc, pairs, encoder, decoder, load_filename, encoder_optimizer_sd, decoder_optimizer_sd, embedding, personas = chatbot.build_model(load_checkpoint=True)
-
+    checkpoint = load_checkpoint(configs['checkpointname'])
+    #voc, pairs, encoder, decoder, load_filename, encoder_optimizer_sd, decoder_optimizer_sd, embedding, personas = chatbot.build_model(load_checkpoint=True)
+    encoder, decoder, embedding, personas, word_map, person_map, checkpoint = chatbot.build_model(checkpoint)
     if configs['model']['search_method']=='greedy':
         searcher = GreedySearchDecoder(encoder, decoder)
     elif configs['model']['search_method']=='beam':
         searcher = BeamSearchDecoder(encoder, decoder)
 
-    speaker = voc.people2index[configs['model']['speaker_name']]
-    return searcher, voc, speaker
+    #speaker = voc.people2index[configs['model']['speaker_name']]
+    return searcher, word_map, person_map
 
 def run(configs):
     # configs
@@ -53,10 +55,15 @@ def run(configs):
     if smoothing_function == "None":
         smoothing_function = None
     # load model
-    searcher, voc, speaker = load_model(configs)
+    searcher, word_map, person_map = load_model(configs)
+    if type_seq2seq != "general":
+        speaker_id = person_map.get_index(configs['model']['speaker_name'])
+    else:
+        speaker_id = person_map.get_index('<none>')
     # read file
     file_path = configs['file_dir'][type_seq2seq][val_or_test]
     #print(file_path)
+    maxscore = 0
     with open(file_path, 'r') as re:
         count_of_sent = 0
         sum_score = 0
@@ -66,9 +73,11 @@ def run(configs):
             input_sent = collect[0]
             reference_sent = collect[1]
             if type_seq2seq == 'personal':
-                personal_label = collect[2]
+                personal_label = str.casefold(collect[2]).strip('\n')
+                if str(personal_label) != configs['model']['speaker_name']:
+                    continue
             # get model output
-            out = evaluate.evaluate(searcher, voc, input_sent, speaker)
+            out = evaluate.evaluate(searcher, word_map, input_sent, speaker_id)
             out[:] = [x for x in out if not (x=='EOS' or x=='PAD')]
             # make tokens
             hypothesis = make_tokens(' '.join(out))
@@ -76,6 +85,10 @@ def run(configs):
             reference = make_tokens(reference_sent)
             # calculate bleu score for this sentence
             score = bleu.cal_bleu(hypothesis, [reference], n_gram, individual_or_cumulative, smoothing_function)
+            if score == 0:
+                continue
+            if score > maxscore:
+                maxscore = score
             print(score)
             print(count_of_sent)
             if score != -1:
@@ -83,9 +96,10 @@ def run(configs):
                 count_of_sent += 1
 
         average_bleu = sum_score / count_of_sent
-        return average_bleu
+        return average_bleu, maxscore
 
 if __name__ == '__main__':
     configs = read_config('config.json')
-    average_bleu = run(configs)
-    print(average_bleu)
+    average_bleu, maxscore = run(configs)
+    print('average_bleu:', average_bleu)
+    print('max_bleu:', maxscore)

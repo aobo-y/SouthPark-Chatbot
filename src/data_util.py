@@ -12,7 +12,7 @@ def normalizeString(s):
     # give a leading & ending spaces to punctuations
     s = re.sub(r'([.!?,])', r' \1 ', s)
     # purge unrecognized token with space
-    s = re.sub(r'[^a-z.!?,]+', r' ', s)
+    s = re.sub(r'[^0-9a-z.!?,]+', r' ', s)
     # squeeze multiple spaces
     s = re.sub(r'([ ]+)', r' ', s)
     # remove extra leading & ending space
@@ -38,14 +38,14 @@ def readVocs(datafile):
     pairs = [[normalizeString(s) for s in l.split('\t')] for l in lines]
     return pairs
 
+def filter_pair(pair):
+    '''
+    Returns True iff both sentences in a pair 'p' are under the MAX_LENGTH threshold
+    '''
+    # TODO: data contains garbage, pretrain data has 2 tab split
 
-# Returns True iff both sentences in a pair 'p' are under the MAX_LENGTH threshold
-def filter_pair(p):
-    # Input sequences need to preserve the last word for EOS token
-    if len(p) == 3 and config.USE_PERSONA:
-        return len(p[0].split(' ')) < config.MAX_LENGTH and len(p[1].split(' ')) < config.MAX_LENGTH and len(p[2]) > 1
-    elif len(p) == 2 and config.USE_PERSONA is not True:
-        return len(p[0].split(' ')) < config.MAX_LENGTH and len(p[1].split(' ')) < config.MAX_LENGTH
+    if len(pair) <= 3 and len(pair) >= 2:
+        return len(pair[0].split(' ')) < config.MAX_LENGTH and len(pair[1].split(' ')) < config.MAX_LENGTH
     else:
         return False
 
@@ -75,13 +75,14 @@ def load_pairs(datafile):
     return pairs
 
 
-def trimRareWords(word_map, pairs):
+def trim_unk_data(pairs, word_map, person_map):
     # Filter out pairs with trimmed words
     keep_pairs = []
 
     for pair in pairs:
         input_sentence = pair[0]
         output_sentence = pair[1]
+
         keep_input = True
         keep_output = True
         # Check input sentence
@@ -94,6 +95,11 @@ def trimRareWords(word_map, pairs):
             if not word_map.has(word):
                 keep_output = False
                 break
+
+        if len(pair) == 3:
+            speaker = pair[2]
+            if not person_map.has(speaker):
+                keep_output = False
 
         # Only keep pairs that do not contain trimmed word(s) in their input or output sentence
         if keep_input and keep_output:
@@ -168,7 +174,7 @@ def batch2TrainData(pair_batch, word_map):
 
 
 def data_2_indexes(pair, word_map, person_map):
-    speaker = pair[2] if len(pair) == 3 and config.USE_PERSONA else config.NONE_PERSONA
+    speaker = pair[2] if len(pair) == 3 else config.NONE_PERSONA
 
     return [
         indexes_from_sentence(pair[0], word_map),

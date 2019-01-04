@@ -24,7 +24,7 @@ class DecoderRNN(nn.Module):
     """
 
     def __init__(self, attn_model, embedding, personas, output_size,
-                 n_layers=1, dropout=0.5, use_persona=True):
+                 n_layers=1, dropout=0.5, rnn_type='GRU'):
         super(DecoderRNN, self).__init__()
         self.attn_model = attn_model
 
@@ -39,9 +39,13 @@ class DecoderRNN(nn.Module):
         self.embedding = embedding
         self.embedding_dropout = nn.Dropout(dropout)
         self.personas = personas
-        self.personas.weight.requires_grad = use_persona
-        self.gru = nn.GRU(self.input_size, hidden_size, n_layers,
-                          dropout=(0 if n_layers == 1 else dropout))
+
+        if rnn_type == 'LSTM':
+            self.decoder = nn.LSTM(self.input_size, hidden_size, n_layers,
+                                   dropout=(0 if n_layers == 1 else dropout))
+        else:
+            self.decoder = nn.GRU(self.input_size, hidden_size, n_layers,
+                                  dropout=(0 if n_layers == 1 else dropout))
         self.concat = nn.Linear(hidden_size * 2, hidden_size)
         self.out = nn.Linear(hidden_size, self.output_size)
         self.attn = Attn(attn_model, hidden_size)
@@ -61,7 +65,7 @@ class DecoderRNN(nn.Module):
         # Forward through GRU
         # rnn_output shape = (1, batch_size, hidden_size)
         # hidden shape = (n_layers*num_directions, batch_size, hidden_size)
-        rnn_output, hidden = self.gru(features, last_hidden)
+        rnn_output, hidden = self.decoder(features, last_hidden)
         # Calculate attention weights from the current GRU output
         # attn_weights shape = (batch_size, 1, max_length)
         attn_weights = self.attn(rnn_output, encoder_outputs)
