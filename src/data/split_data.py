@@ -49,13 +49,13 @@ def split_persona_data(input_file, split_ratio, use_shuffle):
 if __name__=='__main__':
     # generate cornell data
     cornell_train, cornell_val, cornell_test = split_general_data('cornell_movie_dialogs/formatted_movie_lines.txt',
-                                                                    0.1, True)
+                                                                    0.1, False)
 
     # generate south_park general data
-    sp_general_train, sp_general_val, sp_general_test = split_general_data('south_park/general_train.txt', 0.1, True)
+    sp_general_train, sp_general_val, sp_general_test = split_general_data('south_park/general_train.txt', 0.1, False)
 
     # generate south_park fine tune data
-    sp_person_train, sp_person_val, sp_person_test = split_persona_data('south_park/fine_tune.txt', 0.1, True)
+    sp_person_train, sp_person_val, sp_person_test = split_persona_data('south_park/fine_tune.txt', 0.1, False)
 
     # generate simpsons fine tune data
     # simp_person_train, simp_person_val, simp_person_test = split_persona_data('simpsons/fine_tune.txt', 0.1, True)

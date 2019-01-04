@@ -56,7 +56,10 @@ def run(configs):
         smoothing_function = None
     # load model
     searcher, word_map, person_map = load_model(configs)
-    speaker_id = person_map.get_index(configs['model']['speaker_name'])
+    if type_seq2seq != "general":
+        speaker_id = person_map.get_index(configs['model']['speaker_name'])
+    else:
+        speaker_id = person_map.get_index('<none>')
     # read file
     file_path = configs['file_dir'][type_seq2seq][val_or_test]
     #print(file_path)

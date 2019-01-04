@@ -6,12 +6,12 @@ FINETUNE_CORPUS = "data/persona_data/train.txt"
 
 # checkpoints relevant
 SAVE_DIR = 'checkpoints'
-MODEL_NAME = 'dwy_persona_based'
+MODEL_NAME='dwy_persona_based'
 SAVE_EVERY = 1000           # save the checkpoint every x iterations
 
 # Iterations of training
 PRETRAIN_N_ITER = 150 * 10 ** 3
-FINETUNE_N_ITER = 15 * 10 ** 3
+FINETUNE_N_ITER = 25 * 10 ** 3
 
 # Configure models - chat relevant
 BEAM_SEARCH_ON = True        # use Beam Search or Greedy Search
@@ -23,7 +23,7 @@ RNN_TYPE = 'LSTM'            # use LSTM or GRU as RNN
 ATTN_MODEL = 'dot'           # type of the attention model: dot/general/concat
 TRAIN_EMBEDDING = True       # whether to update the word embeddding during training
 HIDDEN_SIZE = 300            # size of the word embedding & number of hidden units in GRU
-PERSONA_SIZE = 100            # size of the persona embedding
+PERSONA_SIZE = 100           # size of the persona embedding
 ENCODER_N_LAYERS = 2         # number of layers in bi-GRU encoder
 DECODER_N_LAYERS = 2         # number of layers in GRU decoder
 ENCODER_DROPOUT_RATE = 0.1   # dropout rate in bi-GRU encoder
@@ -35,11 +35,12 @@ BATCH_SIZE = 64            # size of the mini batch in training state
 CLIP = 50.0                # gradient norm clip
 LR = 0.0001                # encoder learning ratio
 DECODER_LR = 5.0           # decoder learning ratio: LR*DECODER_LR
-PRINT_EVERY = 100          # print the loss every x iterations
-TF_RATE_DECAY_FACTOR = 15 * 10 ** 3      # k in the inverse sigmoid decay func of the teacher force rate k/(k+exp(i/k)), which is related to N_ITER
+PRINT_EVERY = 500          # print the loss every x iterations
+SAVE_EVERY = 5000          # save the checkpoint every x iterations
+TF_RATE_DECAY_FACTOR = 12 * 10 ** 3      # k in the inverse sigmoid decay func of the teacher force rate k/(k+exp(i/k)), which is related to N_ITER
 
 # Parameters for processing the dataset
-MAX_LENGTH = 20  # Maximum sentence length to consider
+MAX_LENGTH = 30  # Maximum sentence length to consider
 
 SPECIAL_WORD_EMBEDDING_TOKENS = {
     'PAD': '<pad>', # Padding token

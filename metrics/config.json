@@ -1,5 +1,5 @@
 {
-    "test_type": "test",
+    "test_type": "valid",
     
     "checkpointname": "finetune_15000",
     "file_dir":{
@@ -15,7 +15,7 @@
         }
     },
     "model":{
-        "type": "personal",
+        "type": "general",
         "speaker_name": "mr. garrison",
         "search_method": "beam"
 
