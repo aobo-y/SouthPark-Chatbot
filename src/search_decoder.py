@@ -104,8 +104,8 @@ class BeamSearchDecoder(nn.Module):
                 values, indexes = decoder_output.topk(self.beam_width)
 
                 for i in range(self.beam_width):
-                    idx = indexes[0][i]
-                    value = values[0][i]
+                    idx = indexes[0][0][i]
+                    value = values[0][0][i]
                     logp = math.log(value)
 
                     node = self.BeamSearchNode(decoder_hidden, idx, value, prevnode, logp + prevnode.logp, dep + 1)
