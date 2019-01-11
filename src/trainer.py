@@ -10,7 +10,7 @@ import torch
 from torch import optim
 import config
 
-from data_util import batch2TrainData
+from data_util import batch_2_seq
 
 DIR_PATH = os.path.dirname(__file__)
 
@@ -69,7 +69,7 @@ class Trainer:
         train a batch of any batch size
 
         Inputs:
-            training_batch: train data batch created by batch2TrainData
+            training_batch: train data batch created by batch_2_seq
             tf_rate: teacher forcing rate, the smaller the rate the higher the scheduled sampling
         '''
 
@@ -137,7 +137,7 @@ class Trainer:
             if batch_idx >= len(training_batches):
                 # maximum batches once to prepare is 1000
                 batches_len = min(n_iteration - iteration + 1, 1000)
-                training_batches = [batch2TrainData([random.choice(pairs) for _ in range(batch_size)], self.voc.pad_idx) for _ in range(batches_len)]
+                training_batches = [batch_2_seq([random.choice(pairs) for _ in range(batch_size)], self.voc.pad_idx) for _ in range(batches_len)]
                 batch_idx = 0
 
             training_batch = training_batches[batch_idx]

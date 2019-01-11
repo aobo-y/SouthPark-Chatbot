@@ -7,7 +7,7 @@ import torch
 import config
 
 # Lowercase and remove non-letter characters
-def normalizeString(s):
+def normalize_str(s):
     s = s.lower()
 
     # trim ending single stop
@@ -30,23 +30,6 @@ def normalizeString(s):
 
 def normalize_name(s):
     return s.lower()
-
-def unicodeToAscii(s):
-    return ''.join(
-        c for c in unicodedata.normalize('NFD', s)
-        if unicodedata.category(c) != 'Mn'
-    )
-
-
-# Read query/response pairs
-def readVocs(datafile):
-    print("Reading lines from %s..." % datafile)
-    # Read the file and split into lines
-    with open(datafile, encoding='utf-8') as f:
-        lines = f.read().strip().split('\n')
-    # Split every line into pairs and normalize
-    pairs = [[normalizeString(s) for s in l.split('\t')] for l in lines]
-    return pairs
 
 def filter_pair(pair):
     '''
@@ -73,8 +56,8 @@ def load_pairs(datafile):
 
     # normalize
     for pair in pairs:
-        pair[0] = normalizeString(pair[0])
-        pair[1] = normalizeString(pair[1])
+        pair[0] = normalize_str(pair[0])
+        pair[1] = normalize_str(pair[1])
         if len(pair) == 3:
             pair[2] = normalize_name(pair[2])
 
@@ -128,24 +111,20 @@ def indexes_from_sentence(sentence, voc):
     return [voc.get_index(token) for token in tokens]
 
 
-def zeroPadding(l, fillvalue):
-    return list(itertools.zip_longest(*l, fillvalue=fillvalue))
+def zip_padding(batches, fillvalue):
+    return list(itertools.zip_longest(*batches, fillvalue=fillvalue))
 
-def binaryMatrix(l, fillvalue):
-    m = []
-    for i, seq in enumerate(l):
-        m.append([])
-        for index in seq:
-            if index == fillvalue:
-                m[i].append(0)
-            else:
-                m[i].append(1)
-    return m
+def binary_mask(seqs, fillvalue):
+    mask = []
+    for batch in seqs:
+        mask_batch = [0 if index == fillvalue else 1 for index in batch]
+        mask.append(mask_batch)
+    return mask
 
 # Returns padded input sequence tensor and lengths
 def input_var(input_batch, padding):
     lengths = torch.tensor([len(indexes) for indexes in input_batch])
-    pad_list = zeroPadding(input_batch, padding)
+    pad_list = zip_padding(input_batch, padding)
 
     pad_var = torch.LongTensor(pad_list)
     return pad_var, lengths
@@ -153,15 +132,15 @@ def input_var(input_batch, padding):
 # Returns padded target sequence tensor, padding mask, and max target length
 def output_var(indexes_batch, padding):
     max_target_len = max([len(indexes) for indexes in indexes_batch])
-    pad_list = zeroPadding(indexes_batch, padding)
-    mask = binaryMatrix(pad_list, padding)
+    pad_list = zip_padding(indexes_batch, padding)
+    mask = binary_mask(pad_list, padding)
     mask = torch.ByteTensor(mask)
 
     pad_var = torch.LongTensor(pad_list)
     return pad_var, mask, max_target_len
 
 # Returns all items for a given batch of pairs
-def batch2TrainData(pair_batch, padding):
+def batch_2_seq(pair_batch, padding):
     # sort by input length, no idea why
     pair_batch.sort(key=lambda x: len(x[0]), reverse=True)
 

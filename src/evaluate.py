@@ -6,7 +6,7 @@ import re
 import datetime
 import torch
 import config
-from data_util import normalizeString, indexes_from_sentence
+from data_util import normalize_str, indexes_from_sentence
 
 
 USE_CUDA = torch.cuda.is_available()
@@ -40,7 +40,7 @@ def evaluateInput(searcher, voc, speaker_id):
             # check if it is quit case
             if input_sentence == 'q' or input_sentence == 'quit':
                 break
-            input_sentence = normalizeString(input_sentence)
+            input_sentence = normalize_str(input_sentence)
             # evaluate sentence
             output_words = evaluate(searcher, voc, input_sentence, speaker_id)
             # format and print reponse sentence
@@ -54,7 +54,7 @@ def evaluateInput(searcher, voc, speaker_id):
 def evaluateExample(sentence, searcher, voc, speaker_id):
     print('> ' + sentence)
     # normalize sentence
-    input_sentence = normalizeString(sentence)
+    input_sentence = normalize_str(sentence)
     # evaluate sentence
     output_words = evaluate(searcher, voc, input_sentence, speaker_id)
     output_words = [x for x in output_words if x not in [voc.eos, voc.pad]]

@@ -31,7 +31,7 @@ OUTPUT_FILES = [
 ]
 
 # same as data util, better import from somewhere
-def normalizeString(s):
+def normalize_str(s):
     s = s.lower()
     # give a leading & ending spaces to punctuations
     s = re.sub(r'([.!?,])', r' \1 ', s)
@@ -68,7 +68,7 @@ def main():
             for line in lines:
                 pairs = line.split('\t')
                 for sentence in pairs[:1]:
-                    sentence = normalizeString(sentence)
+                    sentence = normalize_str(sentence)
                     if sentence == '':
                         continue
 
