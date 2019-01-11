@@ -26,3 +26,6 @@ src/data/persona_data/*
 # word embedding
 src/data/word_embedding/**
 !src/data/word_embedding/filtered.*.txt
+
+# editor
+.vscode/**
