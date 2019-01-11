@@ -150,4 +150,3 @@ class BeamSearchDecoder(nn.Module):
         scores = torch.stack(scores)
 
         return tokens, scores
-
