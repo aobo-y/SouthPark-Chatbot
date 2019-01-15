@@ -10,7 +10,7 @@ import torch
 from torch import optim
 import config
 
-from data_util import batch_2_seq
+from utils.data import batch_2_seq
 
 DIR_PATH = os.path.dirname(__file__)
 

@@ -8,7 +8,7 @@ import torch
 
 import config
 from utils import CheckpointManager, Vocabulary, Persons
-from data_util import trim_unk_data, load_pairs, data_2_indexes
+from utils.data import trim_unk_data, load_pairs, data_2_indexes
 from search_decoder import GreedySearchDecoder, BeamSearchDecoder
 from models import Seq2Seq
 from trainer import Trainer

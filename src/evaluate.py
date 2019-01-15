@@ -6,7 +6,7 @@ import re
 import datetime
 import torch
 import config
-from data_util import normalize_str, indexes_from_sentence
+from utils.data import normalize_str, indexes_from_sentence
 
 
 USE_CUDA = torch.cuda.is_available()
