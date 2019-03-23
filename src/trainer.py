@@ -110,7 +110,7 @@ class Trainer:
         self.encoder_optimizer.step()
         self.decoder_optimizer.step()
 
-        return loss
+        return loss.item()
 
 
     def train(self, pairs, n_iteration, batch_size=1, stage=None):
