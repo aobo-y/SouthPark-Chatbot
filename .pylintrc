@@ -139,7 +139,10 @@ disable=print-statement,
         xreadlines-attribute,
         deprecated-sys-function,
         exception-escape,
-        comprehension-escape
+        comprehension-escape,
+
+        not-callable,
+        arguments-differ
 
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option
@@ -318,7 +321,7 @@ indent-after-paren=4
 indent-string='    '
 
 # Maximum number of characters on a single line.
-max-line-length=150
+max-line-length=200
 
 # Maximum number of lines in a module.
 max-module-lines=1000
@@ -416,7 +419,8 @@ good-names=i,
            k,
            ex,
            Run,
-           _
+           _,
+           v
 
 # Include a hint for the correct naming format with invalid-name.
 include-naming-hint=no
@@ -521,7 +525,7 @@ valid-metaclass-classmethod-first-arg=cls
 [DESIGN]
 
 # Maximum number of arguments for function / method.
-max-args=5
+max-args=8
 
 # Maximum number of attributes for a class (see R0902).
 max-attributes=7

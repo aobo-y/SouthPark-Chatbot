@@ -45,27 +45,38 @@ def split_persona_data(input_file, split_ratio, use_shuffle):
         person_test += person_sents[train_len+val_len:]
     return person_train, person_val, person_test
 
+def remove_character_label(sents_list):
+    for i, line in enumerate(sents_list):
+        items = line.split('\t')
+        new_line = items[0] + '\t' + items[1]
+        sents_list[i] = new_line
+    return sents_list
+
 
 if __name__=='__main__':
+    split_ratio = 0.1
+    use_shuffle = True
+
     # generate cornell data
-    cornell_train, cornell_val, cornell_test = split_general_data('cornell_movie_dialogs/formatted_movie_lines.txt',
-                                                                    0.1, False)
-
+    cornell_train, cornell_val, cornell_test = split_general_data('cornell_movie_dialogs/formatted_movie_lines.txt', split_ratio, use_shuffle)
     # generate south_park general data
-    sp_general_train, sp_general_val, sp_general_test = split_general_data('south_park/general_train.txt', 0.1, False)
-
+    sp_general_train, sp_general_val, sp_general_test = split_general_data('south_park/general_train.txt', split_ratio, use_shuffle)
+    # generate simpsons general data
+    simp_general_train, simp_general_val, simp_general_test = split_general_data('simpsons/fine_tune.txt', split_ratio, use_shuffle)
     # generate south_park fine tune data
-    sp_person_train, sp_person_val, sp_person_test = split_persona_data('south_park/fine_tune.txt', 0.1, False)
+    sp_person_train, sp_person_val, sp_person_test = split_persona_data('south_park/fine_tune.txt', split_ratio, use_shuffle)
 
-    # generate simpsons fine tune data
-    # simp_person_train, simp_person_val, simp_person_test = split_persona_data('simpsons/fine_tune.txt', 0.1, True)
+    # remove the unused character label in simpsons data
+    simp_general_train = remove_character_label(simp_general_train)
+    simp_general_val = remove_character_label(simp_general_val)
+    simp_general_test = remove_character_label(simp_general_test)
 
     # combine general data
     if not os.path.exists('general_data'):
         os.mkdir('general_data')
-    general_train = cornell_train+sp_general_train
-    general_val = cornell_val+sp_general_val
-    general_test = cornell_test+sp_general_test
+    general_train = cornell_train + sp_general_train + simp_general_train
+    general_val = cornell_val + sp_general_val + simp_general_val
+    general_test = cornell_test + sp_general_test + simp_general_test
     with open('general_data/train.txt', 'w', encoding='utf8') as f:
         print(f'Write {len(general_train)} sentences into general_train.')
         for l in general_train:

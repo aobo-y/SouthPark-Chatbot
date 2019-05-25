@@ -1,5 +1,5 @@
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
-from chatbot import telegram_init
+import chatbot
 from evaluate import evaluateExample
 
 speakers = {
@@ -12,7 +12,7 @@ speakers = {
 }
 
 
-searcher, word_map, person_map = telegram_init()
+searcher, word_map, person_map = chatbot.init()
 
 class TeleBot:
     def __init__(self, speaker, token):
@@ -24,19 +24,19 @@ class TeleBot:
         speaker_id = person_map.get_index(self.speaker)
         def start(bot, update):
             bot.send_message(chat_id=update.message.chat_id, text=evaluateExample(
-                    "", 
-                    searcher, 
-                    word_map, 
+                    "",
+                    searcher,
+                    word_map,
                     speaker_id))
         start_handler = CommandHandler('start', start)
         dispatcher.add_handler(start_handler)
         def response(bot, update):
             bot.send_message(
-                chat_id=update.message.chat_id, 
+                chat_id=update.message.chat_id,
                 text=evaluateExample(
-                    update.message.text, 
-                    searcher, 
-                    word_map, 
+                    update.message.text,
+                    searcher,
+                    word_map,
                     speaker_id))
         message_handler = MessageHandler(Filters.text, response)
         dispatcher.add_handler(message_handler)
