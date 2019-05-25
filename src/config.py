@@ -11,7 +11,7 @@ SAVE_EVERY = 1000           # save the checkpoint every x iterations
 
 # Iterations of training
 PRETRAIN_N_ITER = 150 * 10 ** 3
-FINETUNE_N_ITER = 15 * 10 ** 3
+FINETUNE_N_ITER = 25 * 10 ** 3
 
 # Configure models - chat relevant
 BEAM_SEARCH_ON = True        # use Beam Search or Greedy Search
@@ -38,11 +38,12 @@ BATCH_SIZE = 64            # size of the mini batch in training state
 CLIP = 50.0                # gradient norm clip
 LR = 0.0001                # encoder learning ratio
 DECODER_LR = 5.0           # decoder learning ratio: LR*DECODER_LR
-PRINT_EVERY = 100          # print the loss every x iterations
-TF_RATE_DECAY_FACTOR = 15 * 10 ** 3      # k in the inverse sigmoid decay func of the teacher force rate k/(k+exp(i/k)), which is related to N_ITER
+PRINT_EVERY = 500          # print the loss every x iterations
+SAVE_EVERY = 5000          # save the checkpoint every x iterations
+TF_RATE_DECAY_FACTOR = 12 * 10 ** 3      # k in the inverse sigmoid decay func of the teacher force rate k/(k+exp(i/k)), which is related to N_ITER
 
 # Parameters for processing the dataset
-MAX_LENGTH = 20  # Maximum sentence length to consider
+MAX_LENGTH = 30  # Maximum sentence length to consider
 
 
 PERSONS = ['kyle', 'cartman', 'stan', 'chef', 'kenny', 'mr. garrison',

@@ -56,7 +56,7 @@ def remove_character_label(sents_list):
 if __name__=='__main__':
     split_ratio = 0.1
     use_shuffle = True
-    
+
     # generate cornell data
     cornell_train, cornell_val, cornell_test = split_general_data('cornell_movie_dialogs/formatted_movie_lines.txt', split_ratio, use_shuffle)
     # generate south_park general data
@@ -65,12 +65,12 @@ if __name__=='__main__':
     simp_general_train, simp_general_val, simp_general_test = split_general_data('simpsons/fine_tune.txt', split_ratio, use_shuffle)
     # generate south_park fine tune data
     sp_person_train, sp_person_val, sp_person_test = split_persona_data('south_park/fine_tune.txt', split_ratio, use_shuffle)
-    
+
     # remove the unused character label in simpsons data
     simp_general_train = remove_character_label(simp_general_train)
     simp_general_val = remove_character_label(simp_general_val)
     simp_general_test = remove_character_label(simp_general_test)
-    
+
     # combine general data
     if not os.path.exists('general_data'):
         os.mkdir('general_data')
